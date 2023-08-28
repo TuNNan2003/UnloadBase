@@ -94,6 +94,10 @@ void Value::set_float(float val)
   num_value_.float_value_ = val;
   length_ = sizeof(val);
 }
+void Value::set_date(const char *s){
+  attr_type_ = DATES;
+  // TODO 封装定长date类型
+}
 void Value::set_boolean(bool val)
 {
   attr_type_ = BOOLEANS;
@@ -115,6 +119,9 @@ void Value::set_string(const char *s, int len /*= 0*/)
 void Value::set_value(const Value &value)
 {
   switch (value.attr_type_) {
+    case DATES: {
+      set_date(value.get_date());
+    }break;
     case INTS: {
       set_int(value.get_int());
     } break;
@@ -256,6 +263,10 @@ float Value::get_float() const
     }
   }
   return 0;
+}
+
+const char* Value::get_date() const{
+  //TODO 完善
 }
 
 std::string Value::get_string() const

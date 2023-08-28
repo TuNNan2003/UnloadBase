@@ -23,6 +23,7 @@ See the Mulan PSL v2 for more details. */
 enum AttrType
 {
   UNDEFINED,
+  DATES,          ///< 日期类型
   CHARS,          ///< 字符串类型
   INTS,           ///< 整数类型(4字节)
   FLOATS,         ///< 浮点数类型(4字节)
@@ -63,6 +64,7 @@ public:
   {
     this->set_data(const_cast<char *>(data), length);
   }
+  void set_date(const char *s);
   void set_int(int val);
   void set_float(float val);
   void set_boolean(bool val);
@@ -89,6 +91,7 @@ public:
    * 获取对应的值
    * 如果当前的类型与期望获取的类型不符，就会执行转换操作
    */
+  const char* get_date() const;
   int get_int() const;
   float get_float() const;
   std::string get_string() const;
