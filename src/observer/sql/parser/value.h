@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <string>
 
+#include "attr/date.h"
 /**
  * @brief 属性的类型
  * 
@@ -64,7 +65,7 @@ public:
   {
     this->set_data(const_cast<char *>(data), length);
   }
-  void set_date(const char *s);
+  void set_date(Date date);
   void set_int(int val);
   void set_float(float val);
   void set_boolean(bool val);
@@ -91,7 +92,7 @@ public:
    * 获取对应的值
    * 如果当前的类型与期望获取的类型不符，就会执行转换操作
    */
-  const char* get_date() const;
+  Date get_date() const;
   int get_int() const;
   float get_float() const;
   std::string get_string() const;
@@ -107,4 +108,5 @@ private:
     bool bool_value_;
   } num_value_;
   std::string str_value_;
+  Date date_value_;
 };

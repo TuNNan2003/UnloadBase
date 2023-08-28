@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "common/lang/comparator.h"
 #include "common/lang/string.h"
+#include "attr/date.h"
 
 const char *ATTR_TYPE_NAME[] = {"undefined", "chars", "ints", "floats", "booleans"};
 
@@ -94,9 +95,10 @@ void Value::set_float(float val)
   num_value_.float_value_ = val;
   length_ = sizeof(val);
 }
-void Value::set_date(const char *s){
+void Value::set_date(Date date){
   attr_type_ = DATES;
-  // TODO 封装定长date类型
+  date_value_ = date;
+  length_=sizeof(date_value_);
 }
 void Value::set_boolean(bool val)
 {
@@ -156,6 +158,9 @@ std::string Value::to_string() const
 {
   std::stringstream os;
   switch (attr_type_) {
+    case DATES: {
+      // TODO
+    }
     case INTS: {
       os << num_value_.int_value_;
     } break;
@@ -212,6 +217,10 @@ int Value::compare(const Value &other) const
 int Value::get_int() const
 {
   switch (attr_type_) {
+    case DATES: {
+      //TODO 日期转时间戳
+      return 0;
+    }
     case CHARS: {
       try {
         return (int)(std::stol(str_value_));
@@ -240,6 +249,9 @@ int Value::get_int() const
 float Value::get_float() const
 {
   switch (attr_type_) {
+    case DATES: {
+      //TODO 日期转时间戳
+    }break;
     case CHARS: {
       try {
         return std::stof(str_value_);
@@ -265,8 +277,8 @@ float Value::get_float() const
   return 0;
 }
 
-const char* Value::get_date() const{
-  //TODO 完善
+Date Value::get_date() const {
+  return date_value_;
 }
 
 std::string Value::get_string() const
