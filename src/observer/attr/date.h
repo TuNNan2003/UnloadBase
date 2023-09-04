@@ -12,15 +12,17 @@
 
 class Date{
     private:
-        char year[5];
-        char month[3];
-        char day[3];
-        bool nullFlag=false;
-        bool parseDate(char* ptr, char* segment,int len,const char* errorInfo);
+        const char* year;
+        const char* month;
+        const char* day;
+        const bool nullFlag;
+        bool static parseDate(char* &ptr, char* segment,int len,const char* errorInfo);
     public:
+        Date(const char* year,const char* month,const char* day,const bool nullFlag);
+        Date static parseDate(const char* date_);
+        std::string toString() const;
+        Date(const Date &date);
+        Date operator=(const Date &);
+        ~Date();
         Date();
-        Date(const char* date_);
-        void setNullData();
-        std::string toString();
-        
 };

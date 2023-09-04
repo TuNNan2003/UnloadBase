@@ -2,34 +2,43 @@
  * Copyright (c) 2023 UnloadBase and/or its affiliates. All rights reserved.
  */
 
-#include "attr/date.h"
-#include "common/log/log.h"
+#include "date.h"
 
-Date::Date(){
-    this->setNullData();
-}
 
-Date::Date(const char *date_)
+Date Date::parseDate(const char *date_)
 {
     char *ptr = (char *)date_;
-    if (!parseDate(ptr, this->year, 4, "year format error"))
+    char* year=new char[4];
+    char* month=new char[2];
+    char* day=new char[2];
+    bool nullFlag_=false;
+    if (!parseDate(ptr, year, 4, "year format error"))
     {
-        this->setNullData();
-        return;
+        nullFlag_=true;
     }
-    if (!parseDate(ptr, this->month, 2, "month format error"))
+    if (!parseDate(ptr, month, 2, "month format error"))
     {
-        this->setNullData();
-        return;
+        nullFlag_=true;
     }
-    if (!parseDate(ptr, this->day, 2, "day format error"))
+    if (!parseDate(ptr, day, 2, "day format error"))
     {
-        this->setNullData();
-        return;
+        nullFlag_=true;
     }
+    if(nullFlag_){
+        delete[] year;
+        delete[] month;
+        delete[] day;
+        return Date();
+    }
+    return Date(year,month,day,false);
 }
 
-bool Date::parseDate(char *ptr, char *segment, int len, const char *errorInfo)
+Date::Date(const char* year,const char* month,const char* day,const bool nullFlag)
+:year(year),month(month),day(day),nullFlag(nullFlag){}
+
+Date::Date(const Date &date):year(date.year),month(date.month),day(date.day),nullFlag(date.nullFlag){}
+
+bool Date::parseDate(char* &ptr, char *segment, int len, const char *errorInfo)
 {
     int i = 0;
     while (*ptr == '-')
@@ -51,36 +60,32 @@ bool Date::parseDate(char *ptr, char *segment, int len, const char *errorInfo)
     }
     if (i == 0)
     {
-        LOG_ERROR("Date Parser error: %s", errorInfo);
         return false;
     }
     return true;
 }
 
-void Date::setNullData()
-{
-    this->nullFlag = true;
-}
-
-std::string Date::toString()
+std::string Date::toString() const
 {
     if (this->nullFlag)
     {
         return DEFAULT_NULL;
     }
     std::string res = std::string();
-    char *ptr = &year[0];
+    const char *ptr = &year[0];
     while (*ptr != '\0')
     {
         res.push_back(*ptr);
         ptr++;
     }
+    res.push_back('-');
     ptr = &month[0];
     while (*ptr != '\0')
     {
         res.push_back(*ptr);
         ptr++;
     }
+    res.push_back('-');
     ptr = &day[0];
     while (*ptr != '\0')
     {
@@ -89,3 +94,22 @@ std::string Date::toString()
     }
     return res;
 }
+
+Date Date::operator=(const Date &date){
+    this->~Date();
+    return Date(date);
+}
+
+Date::~Date(){
+    if(this->year!=nullptr){
+        delete[] this->year;
+    }
+    if(this->month!=nullptr){
+        delete[] this->month;
+    }
+    if(this->day!=nullptr){
+        delete[] this->day;
+    }
+}
+
+Date::Date():nullFlag(true),year(nullptr),month(nullptr),day(nullptr){}

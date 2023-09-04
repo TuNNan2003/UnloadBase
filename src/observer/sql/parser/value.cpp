@@ -58,10 +58,16 @@ Value::Value(const char *s, int len /*= 0*/)
 {
   set_string(s, len);
 }
+Value::Value(Date date){
+  set_date(date);
+}
 
 void Value::set_data(char *data, int length)
 {
   switch (attr_type_) {
+    case DATES: {
+      date_value_=Date::parseDate(data);
+    }
     case CHARS: {
       set_string(data, length);
     } break;
@@ -97,7 +103,7 @@ void Value::set_float(float val)
 }
 void Value::set_date(Date date){
   attr_type_ = DATES;
-  date_value_ = date;
+  date_value_=date;
   length_=sizeof(date_value_);
 }
 void Value::set_boolean(bool val)
@@ -159,7 +165,7 @@ std::string Value::to_string() const
   std::stringstream os;
   switch (attr_type_) {
     case DATES: {
-      // TODO
+      os<<date_value_.toString();
     }
     case INTS: {
       os << num_value_.int_value_;
@@ -278,7 +284,22 @@ float Value::get_float() const
 }
 
 Date Value::get_date() const {
-  return date_value_;
+  if(this->attr_type_!=DATES || this->attr_type_!=CHARS){
+    LOG_WARN("cannot change this type to date. type=%d", attr_type_);
+    return Date();
+  }
+  switch(attr_type_){
+    case CHARS:{
+      return Date::parseDate(str_value_.c_str());
+    }break;
+    case DATES:{
+        return date_value_;
+    }break;
+    default: {
+      LOG_WARN("unknown data type. type=%d", attr_type_);
+      return Date();
+    }
+  }
 }
 
 std::string Value::get_string() const
