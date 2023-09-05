@@ -8,7 +8,11 @@
 
 #define DEFAULT_NULL "NULLDATA"
 
+#define DATE_LENGTH 11
+
 #include <string>
+
+typedef char date_num;
 
 class Date{
     private:
@@ -19,10 +23,11 @@ class Date{
         bool static parseDate(char* &ptr, char* segment,int len,const char* errorInfo);
     public:
         Date(const char* year,const char* month,const char* day,const bool nullFlag);
-        Date static parseDate(const char* date_);
-        std::string toString() const;
+        static Date* parseDate(const char* date_);
+        const char* toString() const;
+        static const char* parseBytes(char* data); 
+        char* toBytes();
         Date(const Date &date);
-        Date operator=(const Date &);
         ~Date();
         Date();
 };

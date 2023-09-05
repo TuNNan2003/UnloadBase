@@ -58,7 +58,7 @@ Value::Value(const char *s, int len /*= 0*/)
 {
   set_string(s, len);
 }
-Value::Value(Date date){
+Value::Value(const char *date,bool dateFlag){
   set_date(date);
 }
 
@@ -66,8 +66,10 @@ void Value::set_data(char *data, int length)
 {
   switch (attr_type_) {
     case DATES: {
-      date_value_=Date::parseDate(data);
-    }
+      const char* date_str=Date::parseBytes(data);
+      date_value_=Date::parseDate(date_str);
+      length_=DATE_LENGTH;
+    } break;
     case CHARS: {
       set_string(data, length);
     } break;
@@ -101,10 +103,10 @@ void Value::set_float(float val)
   num_value_.float_value_ = val;
   length_ = sizeof(val);
 }
-void Value::set_date(Date date){
+void Value::set_date(const char *date){
   attr_type_ = DATES;
-  date_value_=date;
-  length_=sizeof(date_value_);
+  date_value_=Date::parseDate(date);
+  length_=DATE_LENGTH;
 }
 void Value::set_boolean(bool val)
 {
@@ -128,7 +130,7 @@ void Value::set_value(const Value &value)
 {
   switch (value.attr_type_) {
     case DATES: {
-      set_date(value.get_date());
+      set_date(value.get_date()->toString());
     }break;
     case INTS: {
       set_int(value.get_int());
@@ -151,6 +153,10 @@ void Value::set_value(const Value &value)
 const char *Value::data() const
 {
   switch (attr_type_) {
+    case DATES: {
+      char* data=date_value_->toBytes();
+      return data;
+    }break;
     case CHARS: {
       return str_value_.c_str();
     } break;
@@ -165,7 +171,7 @@ std::string Value::to_string() const
   std::stringstream os;
   switch (attr_type_) {
     case DATES: {
-      os<<date_value_.toString();
+      return date_value_->toString();
     }
     case INTS: {
       os << num_value_.int_value_;
@@ -283,10 +289,10 @@ float Value::get_float() const
   return 0;
 }
 
-Date Value::get_date() const {
-  if(this->attr_type_!=DATES || this->attr_type_!=CHARS){
+Date* Value::get_date() const {
+  if(this->attr_type_!=DATES && this->attr_type_!=CHARS){
     LOG_WARN("cannot change this type to date. type=%d", attr_type_);
-    return Date();
+    return new Date();
   }
   switch(attr_type_){
     case CHARS:{
@@ -297,7 +303,7 @@ Date Value::get_date() const {
     }break;
     default: {
       LOG_WARN("unknown data type. type=%d", attr_type_);
-      return Date();
+      return new Date();
     }
   }
 }

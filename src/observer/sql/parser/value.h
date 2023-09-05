@@ -52,7 +52,7 @@ public:
   explicit Value(float val);
   explicit Value(bool val);
   explicit Value(const char *s, int len = 0);
-  explicit Value(Date date);
+  explicit Value(const char *date,bool dateFlag);
 
   Value(const Value &other) = default;
   Value &operator=(const Value &other) = default;
@@ -66,7 +66,7 @@ public:
   {
     this->set_data(const_cast<char *>(data), length);
   }
-  void set_date(Date date);
+  void set_date(const char *date);
   void set_int(int val);
   void set_float(float val);
   void set_boolean(bool val);
@@ -93,7 +93,7 @@ public:
    * 获取对应的值
    * 如果当前的类型与期望获取的类型不符，就会执行转换操作
    */
-  Date get_date() const;
+  Date* get_date() const;
   int get_int() const;
   float get_float() const;
   std::string get_string() const;
@@ -109,5 +109,5 @@ private:
     bool bool_value_;
   } num_value_;
   std::string str_value_;
-  Date date_value_;
+  Date* date_value_;
 };

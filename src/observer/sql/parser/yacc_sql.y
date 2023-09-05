@@ -385,7 +385,7 @@ value:
     }
     |DATE_STR {
       char *tmp = common::substr($1,1,strlen($1)-2);
-      $$ = new Value(Date::parseDate(tmp));
+      $$ = new Value(tmp,true);
       free(tmp);
     }
     |SSS {
