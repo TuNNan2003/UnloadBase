@@ -10,9 +10,9 @@
 Date* Date::parseDate(const char *date_)
 {
     char *ptr = (char *)date_;
-    char* year=new char[4];
-    char* month=new char[2];
-    char* day=new char[2];
+    int year=0;
+    int month=0;
+    int day=0;
     bool nullFlag_=false;
     if (!parseDate(ptr, year, 4, "year format error"))
     {
@@ -26,41 +26,54 @@ Date* Date::parseDate(const char *date_)
     {
         nullFlag_=true;
     }
-    if(nullFlag_){
+    if(nullFlag_||!validDate(year,month,day)){
+        LOG_ERROR("date format is incorrect or date is illegal");
         return new Date();
     }
-    LOG_DEBUG("success get year:%s,month:%s,day:%s",year,month,day);
-    return new Date(year,month,day,false);
+    LOG_DEBUG("success get year:%d,month:%d,day:%d",year,month,day);
+    char* str=new char[DATE_LENGTH];
+    memcpy(str,date_,DATE_LENGTH);
+    return new Date(str,year,month,day,false);
 }
 
-Date::Date(const char* year,const char* month,const char* day,const bool nullFlag)
-:year(year),month(month),day(day),nullFlag(nullFlag){}
+Date::Date(const char* date,int year,int month,int day,const bool nullFlag)
+:date(date),year(year),month(month),day(day),nullFlag(nullFlag){}
 
-bool Date::parseDate(char* &ptr, char *segment, int len, const char *errorInfo)
+bool Date::parseDate(char* &ptr, int &segment, int len, const char *errorInfo)
 {
-    int i = 0;
+    int i = 0,multi=1;
     while (*ptr == '-')
     {
         ptr++;
+    }
+
+    for(int j=0;j<len-1;j++){
+        multi*=10;
     }
     for (i = 0; i < len; i++)
     {
         if (*ptr == '\0' || *ptr == '-')
         {
-            segment[i] = '\0';
             break;
         }
         else
         {
-            segment[i] = *ptr;
+            segment+=(*ptr-'0')*multi;
+            multi/=10;
         }
         ptr++;
     }
-    if (i == 0)
+    if (i != len)
     {
         LOG_ERROR("Date Parser error: %s", errorInfo);
         return false;
     }
+    return true;
+}
+
+bool Date::validDate(int year,int montn,int day)
+{
+    //todo
     return true;
 }
 
@@ -70,56 +83,32 @@ const char* Date::toString() const
     {
         return DEFAULT_NULL;
     }
-    char* res = new char[DATE_LENGTH];
-    const char *ptr = &year[0];
-    for(int i=0;i<4;i++){
-        res[i]=*ptr;
-        ptr++;
-    }
-    res[4]='-';
-    ptr = &month[0];
-    for(int i=5;i<7;i++){
-        res[i]=*ptr;
-        ptr++;
-    }
-    res[7]='-';
-    ptr = &day[0];
-    for(int i=8;i<10;i++){
-        res[i]=*ptr;
-        ptr++;
-    }
-    res[10]='\0';
-    return res;
+    return date;
 }
 
 char* Date::toBytes(){
     char* data=new char[4];
+    if(nullFlag){
+        data[0]=(char)0;
+        return data;
+    }
     date_num highVal;
     date_num lowVal;
-    const date_num* ptr=year;
-    for(int i=0;i<2;i++){
+    const date_num* ptr=date;
+    for(int i=0;i<4;i++){
+        if(*ptr=='-'){
+            ptr++;
+        }
         highVal=((*ptr-'0')<<4);
         ptr++;
         lowVal=((*ptr-'0'))&(15);
         data[i]=lowVal|highVal;
         ptr++;
     }
-
-    ptr=month;
-    highVal=((*ptr-'0')<<4);
-    ptr++;
-    lowVal=((*ptr-'0'))&(15);
-    data[2]=lowVal|highVal;
-
-    ptr=day;
-    highVal=((*ptr-'0')<<4);
-    ptr++;
-    lowVal=((*ptr-'0'))&(15);
-    data[3]=lowVal|highVal;
     return data;
 }
 
-const char* Date::parseBytes(char* data){
+Date* Date::parseBytes(char* data){
     char* str=new char[11];
     date_num* ptr=data;
     date_num val;
@@ -152,22 +141,19 @@ const char* Date::parseBytes(char* data){
         ptr++;
     }
     str[10]='\0';
-    return str;
+    //delete[] data;
+    Date* res=parseDate(str);
+    delete[] str;
+    return res;
 }
 
 
 Date::~Date(){
-    /*
-    if(this->year!=nullptr){
-        delete[] this->year;
-    }
-    if(this->month!=nullptr){
-        delete[] this->month;
-    }
-    if(this->day!=nullptr){
-        delete[] this->day;
-    }
-    */
+    
 }
 
-Date::Date():nullFlag(true),year(nullptr),month(nullptr),day(nullptr){}
+int Date::getYear(){return year;}
+int Date::getMonth(){return month;}
+int Date::getDay(){return day;}
+
+Date::Date():nullFlag(true),year(0),month(0),day(0),date(DEFAULT_NULL){}

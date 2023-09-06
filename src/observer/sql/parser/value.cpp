@@ -66,9 +66,8 @@ void Value::set_data(char *data, int length)
 {
   switch (attr_type_) {
     case DATES: {
-      const char* date_str=Date::parseBytes(data);
-      date_value_=Date::parseDate(date_str);
-      length_=DATE_LENGTH;
+      date_value_=Date::parseBytes(data);
+      length_=DATE_SIZE;
     } break;
     case CHARS: {
       set_string(data, length);
@@ -106,7 +105,7 @@ void Value::set_float(float val)
 void Value::set_date(const char *date){
   attr_type_ = DATES;
   date_value_=Date::parseDate(date);
-  length_=DATE_LENGTH;
+  length_=DATE_SIZE;
 }
 void Value::set_boolean(bool val)
 {

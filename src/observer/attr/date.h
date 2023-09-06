@@ -8,6 +8,8 @@
 
 #define DEFAULT_NULL "NULLDATA"
 
+#define DATE_SIZE 4
+
 #define DATE_LENGTH 11
 
 #include <string>
@@ -16,18 +18,22 @@ typedef char date_num;
 
 class Date{
     private:
-        const char* year;
-        const char* month;
-        const char* day;
+        const char* date;
+        const int year;
+        const int month;
+        const int day;
         const bool nullFlag;
-        bool static parseDate(char* &ptr, char* segment,int len,const char* errorInfo);
+        bool static parseDate(char* &ptr, int &segment,int len,const char* errorInfo);
+        Date(const char* date,int year,int month,int day,const bool nullFlag);
     public:
-        Date(const char* year,const char* month,const char* day,const bool nullFlag);
         static Date* parseDate(const char* date_);
+        static Date* parseBytes(char* data); 
+        static bool validDate(int year,int month,int day);
         const char* toString() const;
-        static const char* parseBytes(char* data); 
         char* toBytes();
-        Date(const Date &date);
         ~Date();
         Date();
+        int getYear();
+        int getMonth();
+        int getDay();
 };
