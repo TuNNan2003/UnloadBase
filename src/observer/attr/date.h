@@ -24,10 +24,10 @@ class Date{
         const int day;
         const bool nullFlag;
         bool static parseDate(char* &ptr, int &segment,int len,const char* errorInfo);
-        Date(const char* date,int year,int month,int day,const bool nullFlag);
     public:
-        static Date* parseDate(const char* date_);
-        static Date* parseBytes(char* data); 
+        Date(const char* date,int year,int month,int day,const bool nullFlag);
+        static std::shared_ptr<Date> parseDate(const char* date_);
+        static std::shared_ptr<Date> parseBytes(char* data); 
         static bool validDate(int year,int month,int day);
         const char* toString() const;
         char* toBytes();

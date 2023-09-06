@@ -93,7 +93,7 @@ public:
    * 获取对应的值
    * 如果当前的类型与期望获取的类型不符，就会执行转换操作
    */
-  Date* get_date() const;
+  std::shared_ptr<Date> get_date() const;
   int get_int() const;
   float get_float() const;
   std::string get_string() const;
@@ -109,5 +109,5 @@ private:
     bool bool_value_;
   } num_value_;
   std::string str_value_;
-  Date* date_value_;
+  std::shared_ptr<Date> date_value_;
 };

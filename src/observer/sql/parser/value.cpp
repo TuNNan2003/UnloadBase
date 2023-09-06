@@ -288,10 +288,10 @@ float Value::get_float() const
   return 0;
 }
 
-Date* Value::get_date() const {
+std::shared_ptr<Date> Value::get_date() const {
   if(this->attr_type_!=DATES && this->attr_type_!=CHARS){
     LOG_WARN("cannot change this type to date. type=%d", attr_type_);
-    return new Date();
+    return std::make_shared<Date>();
   }
   switch(attr_type_){
     case CHARS:{
@@ -302,7 +302,7 @@ Date* Value::get_date() const {
     }break;
     default: {
       LOG_WARN("unknown data type. type=%d", attr_type_);
-      return new Date();
+      return std::make_shared<Date>();
     }
   }
 }

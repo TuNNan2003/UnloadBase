@@ -7,7 +7,7 @@
 #include "common/log/log.h"
 
 
-Date* Date::parseDate(const char *date_)
+std::shared_ptr<Date> Date::parseDate(const char *date_)
 {
     char *ptr = (char *)date_;
     int year=0;
@@ -28,12 +28,12 @@ Date* Date::parseDate(const char *date_)
     }
     if(nullFlag_||!validDate(year,month,day)){
         LOG_ERROR("date format is incorrect or date is illegal");
-        return new Date();
+        return std::make_shared<Date>();
     }
     LOG_DEBUG("success get year:%d,month:%d,day:%d",year,month,day);
     char* str=new char[DATE_LENGTH];
     memcpy(str,date_,DATE_LENGTH);
-    return new Date(str,year,month,day,false);
+    return std::make_shared<Date>(str,year,month,day,false);
 }
 
 Date::Date(const char* date,int year,int month,int day,const bool nullFlag)
@@ -108,7 +108,7 @@ char* Date::toBytes(){
     return data;
 }
 
-Date* Date::parseBytes(char* data){
+std::shared_ptr<Date> Date::parseBytes(char* data){
     char* str=new char[11];
     date_num* ptr=data;
     date_num val;
@@ -142,14 +142,17 @@ Date* Date::parseBytes(char* data){
     }
     str[10]='\0';
     //delete[] data;
-    Date* res=parseDate(str);
+    std::shared_ptr<Date> res=parseDate(str);
     delete[] str;
     return res;
 }
 
 
 Date::~Date(){
-    
+    if(!nullFlag){
+        delete[] date;
+    }
+    LOG_DEBUG("DATE released");
 }
 
 int Date::getYear(){return year;}
