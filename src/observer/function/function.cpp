@@ -28,7 +28,7 @@ const char* Function::date_format(Value date,const char* fmt){
     return date_format(date.get_date()->getYear(),date.get_date()->getMonth(),date.get_date()->getDay(),fmt);
 }
 
-const char* Function::date_format(int year,int day,int month,const char* fmt){
+const char* Function::date_format(int year,int month,int day,const char* fmt){
     int len=length(fmt)+1;
     char* fmtDate=new char[len+6];
     char* ptr=fmtDate;
