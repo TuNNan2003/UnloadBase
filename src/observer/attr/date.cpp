@@ -71,9 +71,36 @@ bool Date::parseDate(char* &ptr, int &segment, int len, const char *errorInfo)
     return true;
 }
 
-bool Date::validDate(int year,int montn,int day)
+bool Date::validDate(int year,int month,int day)
 {
-    //todo
+    if (year <= 0) {
+        return false;
+    }
+    if (month < 1 || month > 12) {
+        return false;
+    }
+    int daysInMonth;
+    switch (month) {
+        case 2:
+            if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+                daysInMonth = 29;
+            } else {
+                daysInMonth = 28;
+            }
+            break;
+        case 4: 
+        case 6: 
+        case 9: 
+        case 11: 
+            daysInMonth = 30;
+            break;
+        default: 
+            daysInMonth = 31;
+            break;
+    }
+    if (day < 1 || day > daysInMonth) {
+        return false;
+    }
     return true;
 }
 
@@ -145,6 +172,25 @@ std::shared_ptr<Date> Date::parseBytes(char* data){
     std::shared_ptr<Date> res=parseDate(str);
     delete[] str;
     return res;
+}
+
+int Date::toInt(){
+    if(nullFlag){
+        return 0;
+    }
+    return this->day+this->month*100+this->year*10000;
+}
+
+bool Date::isNull(){
+    return nullFlag;
+}
+
+int Date::compare(std::shared_ptr<Date> src,std::shared_ptr<Date> tgt){
+    if(src->isNull()||tgt->isNull()){
+        LOG_ERROR("cannot compare date which has NULL value!");
+        return 0;
+    }
+    return src->toInt()-tgt->toInt();
 }
 
 

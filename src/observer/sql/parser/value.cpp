@@ -195,6 +195,9 @@ int Value::compare(const Value &other) const
 {
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
+      case DATES: {
+        return Date::compare(date_value_,other.date_value_);
+      }break;
       case INTS: {
         return common::compare_int((void *)&this->num_value_.int_value_, (void *)&other.num_value_.int_value_);
       } break;
@@ -229,9 +232,8 @@ int Value::get_int() const
 {
   switch (attr_type_) {
     case DATES: {
-      //TODO 日期转时间戳
-      return 0;
-    }
+      return date_value_->toInt();
+    }break;
     case CHARS: {
       try {
         return (int)(std::stol(str_value_));
@@ -261,7 +263,7 @@ float Value::get_float() const
 {
   switch (attr_type_) {
     case DATES: {
-      //TODO 日期转时间戳
+      return (float)date_value_->toInt();
     }break;
     case CHARS: {
       try {
@@ -315,6 +317,9 @@ std::string Value::get_string() const
 bool Value::get_boolean() const
 {
   switch (attr_type_) {
+    case DATES:{
+      return !date_value_->isNull();
+    }break;
     case CHARS: {
       try {
         float val = std::stof(str_value_);

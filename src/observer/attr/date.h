@@ -29,6 +29,8 @@ class Date{
         static std::shared_ptr<Date> parseDate(const char* date_);
         static std::shared_ptr<Date> parseBytes(char* data); 
         static bool validDate(int year,int month,int day);
+        bool isNull();
+        static int compare(std::shared_ptr<Date> src,std::shared_ptr<Date> tgt);
         const char* toString() const;
         char* toBytes();
         ~Date();
@@ -36,4 +38,5 @@ class Date{
         int getYear();
         int getMonth();
         int getDay();
+        int toInt();
 };
