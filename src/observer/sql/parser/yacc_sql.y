@@ -12,6 +12,7 @@
 #include "sql/parser/yacc_sql.hpp"
 #include "sql/parser/lex_sql.h"
 #include "sql/expr/expression.h"
+#include "function/function.h"
 
 using namespace std;
 
@@ -92,6 +93,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         DATA
         INFILE
         EXPLAIN
+        LENGTH_FUNC
         EQ
         LT
         GT
@@ -527,6 +529,12 @@ rel_attr:
       $$->relation_name  = $1;
       $$->attribute_name = $3;
       free($1);
+      free($3);
+    }
+    | LENGTH_FUNC LBRACE ID RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->function_name = FunctionName::LENGTH; 
       free($3);
     }
     ;

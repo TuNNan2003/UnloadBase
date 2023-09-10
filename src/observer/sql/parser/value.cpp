@@ -182,7 +182,13 @@ std::string Value::to_string() const
       os << num_value_.bool_value_;
     } break;
     case CHARS: {
-      os << str_value_;
+      LOG_DEBUG("CHARS output");
+      if(funcName_==FunctionName::LENGTH){
+        os << SQLFunction::length(str_value_.c_str());
+      }
+      else{
+        os << str_value_;
+      }
     } break;
     default: {
       LOG_WARN("unsupported attr type: %d", attr_type_);
@@ -354,4 +360,12 @@ bool Value::get_boolean() const
     }
   }
   return false;
+}
+
+void Value::setFunctionName(FunctionName funcName){
+  this->funcName_=funcName;
+}
+
+FunctionName Value::getFunctionName(){
+  return funcName_;
 }

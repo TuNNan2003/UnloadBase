@@ -17,6 +17,8 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 
 #include "attr/date.h"
+#include "function/function.h"
+
 /**
  * @brief 属性的类型
  * 
@@ -73,6 +75,9 @@ public:
   void set_string(const char *s, int len = 0);
   void set_value(const Value &value);
 
+  void setFunctionName(FunctionName funcName);
+  FunctionName getFunctionName();
+
   std::string to_string() const;
 
   int compare(const Value &other) const;
@@ -110,4 +115,5 @@ private:
   } num_value_;
   std::string str_value_;
   std::shared_ptr<Date> date_value_;
+  FunctionName funcName_=FunctionName::NULLFUNC;
 };

@@ -18,7 +18,7 @@ See the Mulan PSL v2 for more details.
 #include "function.h"
 #include <cstdio>
 
-int Function::length(const char* str){
+int SQLFunction::length(const char* str){
     int len=0;
     const char * ptr=str;
     while(*ptr!='\0'){
@@ -28,7 +28,7 @@ int Function::length(const char* str){
     return len;
 }
 
-float Function::round(float num, int mark){
+float SQLFunction::round(float num, int mark){
     char str[8];
     char fmt[7];
     float res=0;
@@ -38,14 +38,11 @@ float Function::round(float num, int mark){
     return res;
 }
 
-const char* Function::date_format(Value date,const char* fmt){
-    if(date.attr_type()!=DATES){
-        return DATE_FORMAT_ERROR;
-    }
-    return date_format(date.get_date()->getYear(),date.get_date()->getMonth(),date.get_date()->getDay(),fmt);
+const char* SQLFunction::date_format(std::shared_ptr<Date> date,const char* fmt){
+    return date_format(date->getYear(),date->getMonth(),date->getDay(),fmt);
 }
 
-const char* Function::date_format(int year,int month,int day,const char* fmt){
+const char* SQLFunction::date_format(int year,int month,int day,const char* fmt){
     int len=length(fmt)+1;
     char* fmtDate=new char[len+6];
     char* ptr=fmtDate;
@@ -111,6 +108,6 @@ const char* Function::date_format(int year,int month,int day,const char* fmt){
     return fmtDate;
 }
 
-char Function::toBiggerCase(char ch){
+char SQLFunction::toBiggerCase(char ch){
     return ch<='z'&&ch>='a' ? ch+'A'-'a':ch;
 }

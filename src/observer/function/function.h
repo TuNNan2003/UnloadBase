@@ -16,19 +16,25 @@ See the Mulan PSL v2 for more details.
 
 #pragma once
 
-#include "sql/parser/value.h"
+#include "attr/date.h"
 
 #define DATE_FORMAT_YEAR   'Y'
 #define DATE_FORMAT_MONTH  'M'
 #define DATE_FORMAT_DAY    'D'
 #define DATE_FORMAT_ERROR  "DATEFORMATERROR"
 
+enum FunctionName{
+    NULLFUNC,
+    LENGTH,
+    ROUND,
+    DATE_FORMAT
+};
 
-class Function{
+class SQLFunction{
     public:
         static int length(const char* str);
         static float round(float num,int mark);
-        static const char* date_format(Value date,const char* fmt);
+        static const char* date_format(std::shared_ptr<Date> date,const char* fmt);
     private:
         static const char* date_format(int year,int day,int month,const char* fmt);
         static char toBiggerCase(char ch);

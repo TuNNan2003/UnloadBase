@@ -45,9 +45,18 @@ public:
 
   SqlDebug &sql_debug() { return sql_debug_; }
 
+  void initNames(){funcNames=std::vector<FunctionName>();}
+
+  void addFuncName(FunctionName funcName){funcNames.push_back(funcName);}
+
+  std::vector<FunctionName>* getFuncNames(){
+    return &funcNames;
+  }
+
 private:
   Communicator *communicator_ = nullptr;  ///< 与客户端通讯的对象
   SqlResult     sql_result_;              ///< SQL执行结果
   SqlDebug      sql_debug_;               ///< SQL调试信息
   std::string   query_;                   ///< SQL语句
+  std::vector<FunctionName> funcNames;    ///< 回调函数名称
 };
