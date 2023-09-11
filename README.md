@@ -16,7 +16,7 @@ UnloadBase是基于miniob开发的轻量数据库，采取miniob的架构并完�
 
 ## :pencil2:UnloadBase架构
 
-![unloadbase_sql](./unloadbase_sql.svg)
+![unloadbase_sql](./docs/unloadbase_sql.svg)
 
 ## :whale:下载须知 :feet:
 
