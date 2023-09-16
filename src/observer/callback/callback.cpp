@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details.
 #include "callback.h"
 #include "event/sql_event.h"
 #include "event/session_event.h"
+#include "callbackInfo.h"
 
 void CallBack::callback(SQLStageEvent *sql_event,SessionEvent *event){
     ParsedSqlNode *sql_node = sql_event->sql_node().get();
@@ -26,6 +27,7 @@ void CallBack::callback(SQLStageEvent *sql_event,SessionEvent *event){
         for (int i = static_cast<int>(select_sql.attributes.size()) - 1; i >= 0; i--) {
             const RelAttrSqlNode &relation_attr = select_sql.attributes[i];
             event->addFuncName(relation_attr.function_name);
+            event->addCallBackInfo(relation_attr.param);
         }
     }
 }

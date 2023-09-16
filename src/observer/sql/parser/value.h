@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "attr/date.h"
 #include "function/function.h"
+#include "callback/callbackInfo.h"
 
 /**
  * @brief 属性的类型
@@ -77,6 +78,8 @@ public:
 
   void setFunctionName(FunctionName funcName);
   FunctionName getFunctionName();
+  void setParam(CallbackParams param);
+  CallbackParams getParam();
 
   std::string to_string() const;
 
@@ -116,4 +119,5 @@ private:
   std::string str_value_;
   std::shared_ptr<Date> date_value_;
   FunctionName funcName_=FunctionName::NULLFUNC;
+  CallbackParams param_;
 };

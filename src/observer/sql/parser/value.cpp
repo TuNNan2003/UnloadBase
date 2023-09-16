@@ -170,6 +170,15 @@ std::string Value::to_string() const
   std::stringstream os;
   switch (attr_type_) {
     case DATES: {
+      if(funcName_==FunctionName::DATE_FORMAT){
+        if(param_.type==ParamType::STR_PARAM){
+          os << SQLFunction::date_format(date_value_,param_.str_info.c_str());
+        }else{
+          LOG_WARN("wrong param type, should be string");
+          os << SQLFunction::date_format(date_value_,"%Y-%m-%d");
+        }
+        break;
+      }
       return date_value_->toString();
     }
     case INTS: {
@@ -182,7 +191,6 @@ std::string Value::to_string() const
       os << num_value_.bool_value_;
     } break;
     case CHARS: {
-      LOG_DEBUG("CHARS output");
       if(funcName_==FunctionName::LENGTH){
         os << SQLFunction::length(str_value_.c_str());
       }
@@ -368,4 +376,12 @@ void Value::setFunctionName(FunctionName funcName){
 
 FunctionName Value::getFunctionName(){
   return funcName_;
+}
+
+void Value::setParam(CallbackParams param){
+  this->param_=param;
+}
+
+CallbackParams Value::getParam(){
+  return param_;
 }

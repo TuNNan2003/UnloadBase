@@ -222,6 +222,7 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
   rc = RC::SUCCESS;
   Tuple *tuple = nullptr;
   std::vector<FunctionName> funcNames=*event->getFuncNames();
+  std::vector<CallbackParams> params=*event->getParams();
   while (RC::SUCCESS == (rc = sql_result->next_tuple(tuple))) {
     assert(tuple != nullptr);
 
@@ -241,6 +242,7 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
       rc = tuple->cell_at(i, value);
       if(i<funcNames.size()){
         value.setFunctionName(funcNames[i]);
+        value.setParam(params[i]);
       }
       if (rc != RC::SUCCESS) {
         sql_result->close();

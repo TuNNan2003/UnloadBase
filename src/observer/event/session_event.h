@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/seda/stage_event.h"
 #include "sql/executor/sql_result.h"
 #include "event/sql_debug.h"
+#include "callback/callbackInfo.h"  
 
 class Session;
 class Communicator;
@@ -53,10 +54,19 @@ public:
     return &funcNames;
   }
 
+  void addCallBackInfo(CallbackParams param){
+    callbackInfo.addCallbackInfo(param);
+  }
+
+  std::vector<CallbackParams>* getParams(){
+    return callbackInfo.getCallbackInfo();
+  }
+
 private:
   Communicator *communicator_ = nullptr;  ///< 与客户端通讯的对象
   SqlResult     sql_result_;              ///< SQL执行结果
   SqlDebug      sql_debug_;               ///< SQL调试信息
   std::string   query_;                   ///< SQL语句
   std::vector<FunctionName> funcNames;    ///< 回调函数名称
+  CallbackInfo callbackInfo;              ///< 回调函数其他参数
 };

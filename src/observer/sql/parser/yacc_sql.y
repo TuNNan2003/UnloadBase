@@ -94,6 +94,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         INFILE
         EXPLAIN
         LENGTH_FUNC
+        DATE_FORMAT_FUNC
         EQ
         LT
         GT
@@ -535,6 +536,14 @@ rel_attr:
       $$ = new RelAttrSqlNode;
       $$->attribute_name = $3;
       $$->function_name = FunctionName::LENGTH; 
+      free($3);
+    }
+    | DATE_FORMAT_FUNC LBRACE ID COMMA SSS RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->param.str_info = $5; 
+      $$->param.type=ParamType::STR_PARAM;
+      $$->function_name = FunctionName::DATE_FORMAT; 
       free($3);
     }
     ;

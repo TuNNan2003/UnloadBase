@@ -116,6 +116,7 @@ DATA                                    RETURN_TOKEN(DATA);
 INFILE                                  RETURN_TOKEN(INFILE);
 EXPLAIN                                 RETURN_TOKEN(EXPLAIN);
 LENGTH                                  RETURN_TOKEN(LENGTH_FUNC);
+DATE_FORMAT                             RETURN_TOKEN(DATE_FORMAT_FUNC);
 {ID}                                    yylval->string=strdup(yytext); RETURN_TOKEN(ID);
 "("                                     RETURN_TOKEN(LBRACE);
 ")"                                     RETURN_TOKEN(RBRACE);
