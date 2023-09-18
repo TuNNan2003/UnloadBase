@@ -118,6 +118,8 @@ EXPLAIN                                 RETURN_TOKEN(EXPLAIN);
 LENGTH                                  RETURN_TOKEN(LENGTH_FUNC);
 DATE_FORMAT                             RETURN_TOKEN(DATE_FORMAT_FUNC);
 ROUND                                   RETURN_TOKEN(ROUND_FUNC);
+JOIN                                    RETURN_TOKEN(JOIN);
+INNER                                   RETURN_TOKEN(INNER);
 {ID}                                    yylval->string=strdup(yytext); RETURN_TOKEN(ID);
 "("                                     RETURN_TOKEN(LBRACE);
 ")"                                     RETURN_TOKEN(RBRACE);

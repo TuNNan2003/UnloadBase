@@ -96,6 +96,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         LENGTH_FUNC
         DATE_FORMAT_FUNC
         ROUND_FUNC
+        INNER
+        JOIN
         EQ
         LT
         GT
@@ -141,6 +143,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <attr_info>           attr_def
 %type <value_list>          value_list
 %type <condition_list>      where
+%type <condition_list>      on
+%type <sql_node>            join_tables
 %type <condition_list>      condition_list
 %type <rel_attr_list>       select_attr
 %type <relation_list>       rel_list
@@ -447,6 +451,20 @@ select_stmt:        /*  select 语句的语法解析树*/
       }
       free($4);
     }
+    | SELECT select_attr FROM join_tables where
+    {
+      /*递归解析JOIN语句*/
+      $$ = $4;
+      if ($2 != nullptr) {
+        $$->selection.attributes.swap(*$2);
+        delete $2;
+      }
+      if ($5 != nullptr) {
+        $$->selection.conditions.swap(*$5);
+        delete $5;
+      }
+      $$->selection.joinFlag=true;
+    }
     ;
 calc_stmt:
     CALC expression_list
@@ -599,6 +617,14 @@ where:
       $$ = $2;  
     }
     ;
+on:
+    {
+      $$ = nullptr;
+    } 
+    | ON condition_list {
+      $$ = $2;  
+    }
+    ;
 condition_list:
     /* empty */
     {
@@ -663,6 +689,34 @@ condition:
 
       delete $1;
       delete $3;
+    }
+    ;
+join_tables:
+    ID INNER JOIN ID on
+    {
+      $$ = new ParsedSqlNode(SCF_SELECT);
+      if($5!=nullptr){
+        $$->selection.joinConditions.push_back(*$5);
+        delete $5;
+      }
+      $$->selection.relations.push_back($1);
+      $$->selection.relations.push_back($4);
+      free($1);
+      free($4);
+    }
+    | LBRACE join_tables RBRACE INNER JOIN ID on
+    {
+      $$ = $2;
+      if($7!=nullptr){
+        $$->selection.joinConditions.push_back(*$7);
+        delete $7;
+      }
+      $$->selection.relations.push_back($6);
+      free($6);
+    }
+    | LBRACE join_tables RBRACE
+    {
+      $$ = $2;
     }
     ;
 
