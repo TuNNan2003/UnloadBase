@@ -95,6 +95,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         EXPLAIN
         LENGTH_FUNC
         DATE_FORMAT_FUNC
+        ROUND_FUNC
         EQ
         LT
         GT
@@ -544,6 +545,14 @@ rel_attr:
       $$->param.str_info = $5; 
       $$->param.type=ParamType::STR_PARAM;
       $$->function_name = FunctionName::DATE_FORMAT; 
+      free($3);
+    }
+    | ROUND_FUNC LBRACE ID COMMA number RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->param.num_info.int_value_ = $5; 
+      $$->param.type=ParamType::INT_PARAM;
+      $$->function_name = FunctionName::ROUND; 
       free($3);
     }
     ;

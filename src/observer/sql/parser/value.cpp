@@ -185,6 +185,12 @@ std::string Value::to_string() const
       os << num_value_.int_value_;
     } break;
     case FLOATS: {
+      if(funcName_==FunctionName::ROUND){
+        if(param_.type==ParamType::INT_PARAM){
+          os << SQLFunction::round(num_value_.float_value_,param_.num_info.int_value_);
+          break;
+        }
+      }
       os << common::double_to_str(num_value_.float_value_);
     } break;
     case BOOLEANS: {
