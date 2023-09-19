@@ -2089,7 +2089,7 @@ yyreduce:
         delete (yyvsp[-3].rel_attr_list);
       }
       if ((yyvsp[0].condition_list) != nullptr) {
-        (yyval.sql_node)->selection.conditions.swap(*(yyvsp[0].condition_list));
+        (yyval.sql_node)->selection.conditions.insert((yyval.sql_node)->selection.conditions.begin(),(yyvsp[0].condition_list)->begin(),(yyvsp[0].condition_list)->end());
         delete (yyvsp[0].condition_list);
       }
       (yyval.sql_node)->selection.joinFlag=true;
@@ -2449,7 +2449,7 @@ yyreduce:
     {
       (yyval.sql_node) = new ParsedSqlNode(SCF_SELECT);
       if((yyvsp[0].condition_list)!=nullptr){
-        (yyval.sql_node)->selection.joinConditions.push_back(*(yyvsp[0].condition_list));
+        (yyval.sql_node)->selection.conditions.insert((yyval.sql_node)->selection.conditions.begin(),(yyvsp[0].condition_list)->begin(),(yyvsp[0].condition_list)->end());
         delete (yyvsp[0].condition_list);
       }
       (yyval.sql_node)->selection.relations.push_back((yyvsp[-4].string));
@@ -2465,7 +2465,7 @@ yyreduce:
     {
       (yyval.sql_node) = (yyvsp[-5].sql_node);
       if((yyvsp[0].condition_list)!=nullptr){
-        (yyval.sql_node)->selection.joinConditions.push_back(*(yyvsp[0].condition_list));
+        (yyval.sql_node)->selection.conditions.insert((yyval.sql_node)->selection.conditions.begin(),(yyvsp[0].condition_list)->begin(),(yyvsp[0].condition_list)->end());
         delete (yyvsp[0].condition_list);
       }
       (yyval.sql_node)->selection.relations.push_back((yyvsp[-1].string));

@@ -130,48 +130,19 @@ RC SelectStmt::create(Db *db, const SelectSqlNode &select_sql, Stmt *&stmt)
     default_table = tables[0];
   }
 
+  // create filter statement in `where` statement
   FilterStmt *filter_stmt = nullptr;
-  // join情况下的处理方式，暂时拍平处理
-  if(select_sql.joinFlag){
-    //用conditons拍平处理全部条件查询语句
-    std::vector<ConditionSqlNode> conditions;
-    for(ConditionSqlNode condition:select_sql.conditions){
-      conditions.push_back(condition);
-    }
-
-    // add join conditions in join statement 
-    // 此处直接将多级的join条件退化到filter的条件，这将会以where语句的方式过滤，有待优化
-    for(std::vector<ConditionSqlNode> join_condition:select_sql.joinConditions){
-      for(ConditionSqlNode condition:join_condition){
-        conditions.push_back(condition);
-      }
-    }
-
-    // create filter statement in `where` statement
-    RC rc = FilterStmt::create(db,
-        default_table,
-        &table_map,
-        conditions.data(),
-        static_cast<int>(select_sql.conditions.size()),
-        filter_stmt);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("cannot construct filter stmt");
-      return rc;
-    }
+  RC rc = FilterStmt::create(db,
+      default_table,
+      &table_map,
+      select_sql.conditions.data(),
+      static_cast<int>(select_sql.conditions.size()),
+      filter_stmt);
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("cannot construct filter stmt");
+    return rc;
   }
-  else{
-    // create filter statement in `where` statement
-    RC rc = FilterStmt::create(db,
-        default_table,
-        &table_map,
-        select_sql.conditions.data(),
-        static_cast<int>(select_sql.conditions.size()),
-        filter_stmt);
-    if (rc != RC::SUCCESS) {
-      LOG_WARN("cannot construct filter stmt");
-      return rc;
-    }
-  }
+
   // everything alright
   SelectStmt *select_stmt = new SelectStmt();
   // TODO add expression copy

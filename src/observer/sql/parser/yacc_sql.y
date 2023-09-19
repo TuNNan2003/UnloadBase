@@ -460,7 +460,7 @@ select_stmt:        /*  select 语句的语法解析树*/
         delete $2;
       }
       if ($5 != nullptr) {
-        $$->selection.conditions.swap(*$5);
+        $$->selection.conditions.insert($$->selection.conditions.begin(),$5->begin(),$5->end());
         delete $5;
       }
       $$->selection.joinFlag=true;
@@ -696,7 +696,7 @@ join_tables:
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if($5!=nullptr){
-        $$->selection.joinConditions.push_back(*$5);
+        $$->selection.conditions.insert($$->selection.conditions.begin(),$5->begin(),$5->end());
         delete $5;
       }
       $$->selection.relations.push_back($1);
@@ -708,7 +708,7 @@ join_tables:
     {
       $$ = $2;
       if($7!=nullptr){
-        $$->selection.joinConditions.push_back(*$7);
+        $$->selection.conditions.insert($$->selection.conditions.begin(),$7->begin(),$7->end());
         delete $7;
       }
       $$->selection.relations.push_back($6);
