@@ -19,6 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/comparator.h"
 #include "common/lang/string.h"
 #include "attr/date.h"
+#include "attr/typecast.h"
 
 const char *ATTR_TYPE_NAME[] = {"undefined", "chars", "ints", "floats", "booleans"};
 
@@ -243,6 +244,12 @@ int Value::compare(const Value &other) const
   } else if (this->attr_type_ == FLOATS && other.attr_type_ == INTS) {
     float other_data = other.num_value_.int_value_;
     return common::compare_float((void *)&this->num_value_.float_value_, (void *)&other_data);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == INTS){
+    int str2Int=TypeCast::castStr2Int(this->str_value_.c_str());
+    return common::compare_int((void *)&str2Int,(void *)&other.num_value_.int_value_);
+  } else if (this->attr_type_ == INTS && other.attr_type_ == CHARS){
+    int str2Int=TypeCast::castStr2Int(other.str_value_.c_str());
+    return common::compare_int((void *)&this->num_value_.int_value_,(void *)&str2Int);
   }
   LOG_WARN("not supported");
   return -1;  // TODO return rc?
