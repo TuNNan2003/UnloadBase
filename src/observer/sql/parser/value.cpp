@@ -250,6 +250,12 @@ int Value::compare(const Value &other) const
   } else if (this->attr_type_ == INTS && other.attr_type_ == CHARS){
     int str2Int=TypeCast::castStr2Int(other.str_value_.c_str());
     return common::compare_int((void *)&this->num_value_.int_value_,(void *)&str2Int);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == FLOATS){
+    float str2Float=TypeCast::castStr2Float(this->str_value_.c_str());
+    return common::compare_float((void *)&str2Float,(void*)&other.num_value_.float_value_);
+  } else if (this->attr_type_ == FLOATS && other.attr_type_ == CHARS){
+    float str2Float=TypeCast::castStr2Float(other.str_value_.c_str());
+    return common::compare_float((void *)&this->num_value_.float_value_,(void *)&str2Float);
   }
   LOG_WARN("not supported");
   return -1;  // TODO return rc?
