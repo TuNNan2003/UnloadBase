@@ -25,6 +25,7 @@ See the Mulan PSL v2 for more details.
 #define DATE_LENGTH 11
 
 #include <string>
+#include <memory>
 
 typedef char date_num;
 
