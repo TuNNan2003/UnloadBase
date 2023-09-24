@@ -29,4 +29,5 @@ class CallBack
 {
 public:
   void static callback(SQLStageEvent *sql_event,SessionEvent *event);
+  std::vector<Value> static aggregate(SessionEvent *event,RC &rc);
 };

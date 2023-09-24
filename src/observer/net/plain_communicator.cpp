@@ -19,6 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include "session/session.h"
 #include "common/io/io.h"
 #include "common/log/log.h"
+#include "callback/callback.h"
 
 PlainCommunicator::PlainCommunicator()
 {
@@ -259,99 +260,7 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
 
   if (sql_cal_type.size() != 0 && *sql_cal_type.begin() == SqlCalculateType::AGGREGATE)
   {
-    std::vector<Value> aggregate_result(funcNames.size());
-    rc = sql_result->next_tuple(tuple);
-    int aggregate_num = funcNames.size();
-    int TupleNum = 0;
-    if (rc == RC::SUCCESS)
-    {
-      bool begin_flag = true;
-      do
-      {
-        TupleNum += 1;
-        int cell_num = tuple->cell_num();
-        assert(aggregate_num == cell_num);
-        for (int i = 0; i < cell_num; i++)
-        {
-          Value value;
-          rc = tuple->cell_at(i, value);
-          FunctionName func_type = funcNames.at(i);
-          switch (func_type)
-          {
-          case AGGREGATE_MAX:
-          {
-            if (begin_flag)
-            {
-              std::swap(aggregate_result.at(i), value);
-            }
-            else if (aggregate_result.at(i).compare(value) <= 0)
-            {
-              std::swap(aggregate_result.at(i), value);
-            }
-          }
-          break;
-          case AGGREGATE_MIN:
-          {
-            if (begin_flag)
-            {
-              std::swap(aggregate_result.at(i), value);
-              begin_flag = false;
-            }
-            else if (aggregate_result.at(i).compare(value) >= 0)
-            {
-              std::swap(aggregate_result.at(i), value);
-            }
-          }
-          break;
-          case AGGREGATE_SUM:
-          {
-            if(begin_flag){
-              std::swap(aggregate_result.at(i), value);
-              begin_flag = false;
-            }else{
-              aggregate_result.at(i).add(value);
-            }
-          }
-          break;
-          case AGGREGATE_AVG:
-          {
-            if(begin_flag){
-              std::swap(aggregate_result.at(i), value);
-            }else{
-              aggregate_result.at(i).add(value);
-            }
-          }
-          break;
-          case AGGREGATE_COUNT:
-          {
-            if(begin_flag){
-              aggregate_result.at(i).set_int(1);
-            }else{
-              aggregate_result.at(i).set_int(aggregate_result.at(i).get_int() + 1);
-            }
-          }
-          break;
-          default:
-          {
-            LOG_ERROR("Can't classify this aggregation function");
-          }
-          break;
-          }
-        }
-        begin_flag = false;
-      } while (RC::SUCCESS == (rc = sql_result->next_tuple(tuple)));
-
-      for(int i = 0; i < funcNames.size(); i++){
-        if(funcNames.at(i) == AGGREGATE_AVG){
-          Value avg = aggregate_result.at(i);
-          aggregate_result.at(i).set_float(avg.get_float() / TupleNum);
-        }
-      }
-    }
-    else
-    {
-      LOG_WARN("Attempt to use aggregate function on an empty table");
-    }
+    std::vector<Value> aggregate_result=CallBack::aggregate(event,rc);
 
     for (int i = 0; i < aggregate_result.size(); i++)
     {
