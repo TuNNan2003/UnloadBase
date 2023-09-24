@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 /*
 *   Created by wuhuua on 2023/9/24
 */
+#pragma once
+
 #include "sql/parser/value.h"
 #include "function.h"
 
