@@ -16,110 +16,82 @@ See the Mulan PSL v2 for more details.
 
 #include "aggr_function.h"
 
-void (*AggrFunc::getAggrFunc(FunctionName name))(Value,Value&,int){
-    switch(name){
-        case FunctionName::AGGREGATE_MAX:{
-            return &AggrFunc::max;
+AggregateFunction* AggregateFunctionFactory::CreateAggregateFunction(FunctionName func){
+    switch (func){
+        case FunctionName::AGGREGATE_AVG : {
+            return new AvgAggregateFunction();
         }break;
-        case FunctionName::AGGREGATE_MIN:{
-            return &AggrFunc::min;
+        case FunctionName::AGGREGATE_COUNT : {
+            return new CountAggregateFunction();
         }break;
-        case FunctionName::AGGREGATE_AVG:{
-            return &AggrFunc::avg;
+        case FunctionName::AGGREGATE_MAX : {
+            return new MaxAggregateFunction();
         }break;
-        case FunctionName::AGGREGATE_SUM:{
-            return &AggrFunc::sum;
+        case FunctionName::AGGREGATE_MIN : {
+            return new MinAggregateFunction();
         }break;
-        case FunctionName::AGGREGATE_COUNT:{
-            return &AggrFunc::count;
+        case FunctionName::AGGREGATE_SUM : {
+            return new SumAggregateFunction();
         }break;
-        default:{
-            return &AggrFunc::nothing2do;
+        default : {
+            return nullptr;
         }break;
     }
 }
 
-
-void AggrFunc::max(Value value,Value& res,int state){
-    switch(state){
-        case 0:{
-            std::swap(res,value);
-        }break;
-        case 1:{
-            if(res.compare(value)<=0){
-                std::swap(res,value);
-            }
-        }break;
-        case 2:{break;}
-        default:{break;}
-    }
-}
-
-void AggrFunc::min(Value value,Value& res,int state){
-    switch(state){
-        case 0:{
-            std::swap(res,value);
-        }break;
-        case 1:{
-            if(res.compare(value)>=0){
-                std::swap(res,value);
-            }
-        }break;
-        case 2:{break;}
-        default:{break;}
-    }
-}
-
-void AggrFunc::sum(Value value,Value& res,int state){
-    switch(state){
-        case 0:{
-            std::swap(res,value);
-        }break;
-        case 1:{
-            res.add(value);
-        }break;
-        case 2:{break;}
-        default:{break;}
-    }
-}
-
-void AggrFunc::avg(Value value,Value& res,int state){
-    static int count=0;
-    switch(state){
-        case 0:{
-            std::swap(res,value);
-            count=0;
-        }break;
-        case 1:{
-            res.add(value);
-            count++;
-        }break;
-        case 2:{
-            res.set_float(res.get_float() / count);
-            count=0;
+void MaxAggregateFunction::calc(Value value, Value& res){
+    if(begin_flag){
+        std::swap(res, value);
+        begin_flag = false;
+    }else{
+        if(res.compare(value) <= 0){
+            std::swap(res, value);
         }
-        default:{break;}
     }
 }
 
-void AggrFunc::count(Value value,Value& res,int state){
-    switch(state){
-        case 0:{
-            res.set_int(1);
-        }break;
-        case 1:{
-            res.set_int(res.get_int()+1);
-        }break;
-        case 2:{break;}
-        default:{break;}
+void MinAggregateFunction::calc(Value value, Value& res){
+    if(begin_flag){
+        std::swap(res, value);
+        begin_flag = false;
+    }else{
+        if(res.compare(value) >= 0){
+            std::swap(res, value);
+        }
     }
 }
 
-void AggrFunc::nothing2do(Value value,Value& res,int state){
-    switch(state){
-        case 0:{break;}
-        case 1:{break;}
-        case 2:{break;}
-        default:{break;}
+void SumAggregateFunction::calc(Value value, Value& res){
+    if(begin_flag){
+        std::swap(value, res);
+        begin_flag = false;
+    }else{
+        res.add(value);
+    }
+}
+
+void AvgAggregateFunction::calc(Value value, Value& res){
+    if(begin_flag){
+        std::swap(res, value);
+        count = 1;
+        begin_flag = false;
+    }else{
+        res.add(value);
+        count++;
+    }
+}
+
+void AvgAggregateFunction::average(Value& res){
+    if(count != 0){
+        res.set_float(res.get_float() / count);
+    }
+}
+
+void CountAggregateFunction::calc(Value value, Value& res){
+    if(begin_flag){
+        res.set_int(1);
+        begin_flag = false;
+    }else{
+        res.set_int(res.get_int() + 1);
     }
 }

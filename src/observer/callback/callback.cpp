@@ -35,41 +35,41 @@ void CallBack::callback(SQLStageEvent *sql_event,SessionEvent *event){
 std::vector<Value> CallBack::aggregate(SessionEvent *event,RC &rc){
   //根据聚合函数名称获得其指针
   std::vector<FunctionName> funcNames = *event->getFuncNames();
-  std::vector<void (*)(Value,Value&,int)> aggregateFuncs(funcNames.size());
-  for(int i=0;i<aggregateFuncs.size();i++){
-    aggregateFuncs[i]=AggrFunc::getAggrFunc(funcNames[i]);
+  std::vector<AggregateFunction*> AggregateFuncs(funcNames.size());
+  AggregateFunctionFactory* AggFactory = new AggregateFunctionFactory();
+  for(int i=0;i<AggregateFuncs.size();i++){
+    AggregateFuncs[i] = AggFactory->CreateAggregateFunction(funcNames[i]);
   }
 
   //遍历每个row执行聚合函数
   SqlResult *sql_result = event->sql_result();
   Tuple *tuple = nullptr;
-  std::vector<Value> aggregate_result(aggregateFuncs.size());
+  std::vector<Value> aggregate_result(AggregateFuncs.size());
+
   rc = sql_result->next_tuple(tuple);
   int aggregate_num = funcNames.size();
   if (rc == RC::SUCCESS)
   {
-    int flag = 0;
     do
-    {
+    {    
       int cell_num = tuple->cell_num();
       assert(aggregate_num == cell_num);
       for (int i = 0; i < cell_num; i++)
       {
         Value value;
         rc = tuple->cell_at(i, value);
-        FunctionName func_type = funcNames.at(i);
-        aggregateFuncs[i](value,aggregate_result[i],flag);
+        AggregateFuncs[i]->calc(value, aggregate_result[i]);
       }
-      flag = 1;
     } while (RC::SUCCESS == (rc = sql_result->next_tuple(tuple)));
-    flag=2;
     for(int i = 0; i < funcNames.size(); i++){
-      Value value;
-      aggregateFuncs[i](value,aggregate_result[i],flag);
+      if(funcNames[i] == FunctionName::AGGREGATE_AVG){
+        static_cast<AvgAggregateFunction*>(AggregateFuncs[i])->average(aggregate_result[i]);
+      }
     }
   }
   else
   {
     LOG_WARN("Attempt to use aggregate function on an empty table");
   }
+  return aggregate_result;
 }
