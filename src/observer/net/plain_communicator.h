@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include <vector>
 
 #include "net/communicator.h"
+#include "function/function.h"
 
 /**
  * @brief 与客户端进行通讯

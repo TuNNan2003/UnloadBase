@@ -85,6 +85,8 @@ public:
 
   int compare(const Value &other) const;
 
+
+
   const char *data() const;
   int length() const
   {
@@ -106,6 +108,7 @@ public:
   float get_float() const;
   std::string get_string() const;
   bool get_boolean() const;
+  void add(const Value &other);
 
 private:
   AttrType attr_type_ = UNDEFINED;

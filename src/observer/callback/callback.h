@@ -17,6 +17,10 @@ See the Mulan PSL v2 for more details.
 #include "sql/parser/parse.h"
 #include "common/rc.h"
 #include "session/session.h"
+#include "function/function.h"
+#include "event/sql_event.h"
+#include "event/session_event.h"
+#include "callbackInfo.h"
 
 class SQLStageEvent;
 class ParsedSqlNode;

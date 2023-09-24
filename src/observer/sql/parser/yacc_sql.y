@@ -104,6 +104,12 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         LE
         GE
         NE
+        MAX
+        MIN
+        COUNT
+        AVG 
+        SUM 
+
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
 %union {
@@ -556,6 +562,36 @@ rel_attr:
       $$->attribute_name = $3;
       $$->function_name = FunctionName::LENGTH; 
       free($3);
+    }
+    | MAX LBRACE ID RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->function_name = FunctionName::AGGREGATE_MAX;
+      $$->sql_type =  SqlCalculateType::AGGREGATE;   
+    }
+    | MIN LBRACE ID RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->function_name = FunctionName::AGGREGATE_MIN;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | COUNT LBRACE ID RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->function_name = FunctionName::AGGREGATE_COUNT;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | AVG LBRACE ID RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->function_name = FunctionName::AGGREGATE_AVG;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | SUM LBRACE ID RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->attribute_name = $3;
+      $$->function_name = FunctionName::AGGREGATE_SUM;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
     }
     | DATE_FORMAT_FUNC LBRACE ID COMMA SSS RBRACE{
       $$ = new RelAttrSqlNode;

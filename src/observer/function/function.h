@@ -27,7 +27,17 @@ enum FunctionName{
     NULLFUNC,
     LENGTH,
     ROUND,
-    DATE_FORMAT
+    DATE_FORMAT,
+    AGGREGATE_MAX,
+    AGGREGATE_MIN,
+    AGGREGATE_COUNT,
+    AGGREGATE_AVG,
+    AGGREGATE_SUM
+};
+
+enum SqlCalculateType{
+    NULLSql,
+    AGGREGATE
 };
 
 class SQLFunction{

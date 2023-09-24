@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/executor/sql_result.h"
 #include "event/sql_debug.h"
 #include "callback/callbackInfo.h"  
+#include "function/function.h"
 
 class Session;
 class Communicator;
@@ -54,6 +55,14 @@ public:
     return &funcNames;
   }
 
+  std::vector<SqlCalculateType>* getSqlCalType(){
+    return &sql_calculate_type;
+  }
+
+  void addSqlCalculateType(const SqlCalculateType sql_cal_type){
+    sql_calculate_type.push_back(sql_cal_type);
+  }
+  
   void addCallBackInfo(CallbackParams param){
     callbackInfo.addCallbackInfo(param);
   }
@@ -68,5 +77,6 @@ private:
   SqlDebug      sql_debug_;               ///< SQL调试信息
   std::string   query_;                   ///< SQL语句
   std::vector<FunctionName> funcNames;    ///< 回调函数名称
+  std::vector<SqlCalculateType> sql_calculate_type;
   CallbackInfo callbackInfo;              ///< 回调函数其他参数
 };

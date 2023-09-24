@@ -261,6 +261,20 @@ int Value::compare(const Value &other) const
   return -1;  // TODO return rc?
 }
 
+void Value::add(const Value& other){
+  switch (attr_type_){
+    case INTS : {
+      set_int(get_int() + other.get_int());
+    }break;
+    case FLOATS : {
+      set_float(get_float() + other.get_float());
+    }break;
+    default : {
+      LOG_WARN("NOT implemented");
+    }break;
+  }
+}
+
 int Value::get_int() const
 {
   switch (attr_type_) {

@@ -43,6 +43,7 @@ struct RelAttrSqlNode
   std::string relation_name;   ///< relation name (may be NULL) 表名
   std::string attribute_name;  ///< attribute name              属性名
   FunctionName function_name=NULLFUNC; ///< function name       函数名
+  SqlCalculateType sql_type=NULLSql;
   CallbackParams param;        ///< callback param              函数参数
 };
 
@@ -99,6 +100,13 @@ struct SelectSqlNode
   std::vector<std::string>        relations;                  ///< 查询的表
   std::vector<ConditionSqlNode>   conditions;                 ///< 查询条件，使用AND串联起来多个条件
   bool joinFlag=false;                                        ///< Join flag，用于判断relation中表的关系
+};
+
+struct AggregateSqlNode
+{
+  std::string relation_name;
+  int aggregateOP;
+  std::string operate_attribute;
 };
 
 /**
@@ -288,6 +296,7 @@ enum SqlCommandFlag
   SCF_EXIT,
   SCF_EXPLAIN,
   SCF_SET_VARIABLE, ///< 设置变量
+  SCF_AGGREGATE,
 };
 /**
  * @brief 表示一个SQL语句
@@ -311,7 +320,7 @@ public:
   LoadDataSqlNode           load_data;
   ExplainSqlNode            explain;
   SetVariableSqlNode        set_variable;
-
+  AggregateSqlNode         aggregate;
 public:
   ParsedSqlNode();
   explicit ParsedSqlNode(SqlCommandFlag flag);
