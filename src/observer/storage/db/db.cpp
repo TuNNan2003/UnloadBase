@@ -100,6 +100,25 @@ RC Db::create_table(const char *table_name, int attribute_count, const AttrInfoS
   return RC::SUCCESS;
 }
 
+
+RC Db::drop_table(const char *table_name){
+  RC rc = RC::SUCCESS;
+  auto ptr = opened_tables_.find(table_name);
+  if(ptr == opened_tables_.end()){
+    LOG_ERROR("can't find table %s", table_name);
+    return RC::INVALID_ARGUMENT;
+  }
+  Table* table = ptr->second;
+  rc = table->destory(path_.c_str());
+  if(rc != RC::SUCCESS){
+    return rc;
+  }
+  opened_tables_.erase(ptr);
+  delete table;
+  return rc;
+}
+
+
 Table *Db::find_table(const char *table_name) const
 {
   std::unordered_map<std::string, Table *>::const_iterator iter = opened_tables_.find(table_name);
