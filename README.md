@@ -151,6 +151,9 @@ LD_LIBRARY_PATH 是Linux环境中，运行时查找动态链接库的路径，�
 
 日志和数据库的持久化文件都在`build`或`build_debug`路径下，我们也会持久化你的sql语句记录
 
+## :alarm_clock:贡献时长
+[wuhuua](https://github.com/wuhuua)[![UnloadBase](https://wakatime.com/badge/user/e4826945-9108-492a-9ac8-2bc8d7dfb994/project/ac35ffd3-95b2-4e3d-90d3-c5b6e2ade501.svg)](https://wakatime.com/badge/user/e4826945-9108-492a-9ac8-2bc8d7dfb994/project/ac35ffd3-95b2-4e3d-90d3-c5b6e2ade501)
+
 ## :sparkling_heart:License
 
 MiniOB 采用 [木兰宽松许可证，第2版](https://license.coscl.org.cn/MulanPSL2), 可以自由拷贝和使用源码, 当做修改或分发时, 请遵守 [木兰宽松许可证，第2版](https://license.coscl.org.cn/MulanPSL2).
