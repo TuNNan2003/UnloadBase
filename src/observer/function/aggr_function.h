@@ -20,13 +20,17 @@ See the Mulan PSL v2 for more details.
 #include "sql/parser/value.h"
 
 
-
+/*
+*   calc作为迭代器计算函数进行计算并保存中间变量
+*   set利用中间变量计算最终的结果，适用于数理统计类型的变量
+*/
 
 class AggregateFunction{
 public:
     AggregateFunction() : begin_flag(true) {}
     virtual ~AggregateFunction() { }
     virtual void calc(Value value, Value& res) {return; }
+    virtual void set(Value& res){};
 protected:
     bool begin_flag;
 };
@@ -35,19 +39,21 @@ class MaxAggregateFunction : public AggregateFunction{
 public:
     MaxAggregateFunction() : AggregateFunction() {}
     void calc(Value value, Value& res); 
+    void set(Value& res){return;};
 };
 
 class MinAggregateFunction : public AggregateFunction{
 public:
     MinAggregateFunction() : AggregateFunction() {}
     void calc(Value value, Value& res);
+    void set(Value& res){return;};
 };
 
 class AvgAggregateFunction : public AggregateFunction{
 public:
     AvgAggregateFunction() : AggregateFunction() {}
     void calc(Value value, Value& res);
-    void average(Value& res);
+    void set(Value& res);
 private:
     int count;
 };
@@ -56,16 +62,18 @@ class SumAggregateFunction : public AggregateFunction{
 public:
     SumAggregateFunction() : AggregateFunction() {}
     void calc(Value value, Value& res);
+    void set(Value& res){return;};
 };
 
 class CountAggregateFunction : public AggregateFunction{
 public:
     CountAggregateFunction() : AggregateFunction() {}
     void calc(Value value, Value& res);
+    void set(Value& res){return;};
 };
 
 class AggregateFunctionFactory{
 public: 
     AggregateFunctionFactory() {}
-    AggregateFunction* CreateAggregateFunction(FunctionName func);
+    AggregateFunction static CreateAggregateFunction(FunctionName func);
 };
