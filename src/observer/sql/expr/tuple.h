@@ -177,6 +177,21 @@ public:
     cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
     return RC::SUCCESS;
   }
+  
+  void set_cell(int index, Value &value){
+    int offset = speces_[index]->field().meta()->offset();
+    int len = speces_[index]->field().meta()->len();
+    memcpy(record_->data() + offset, value.data(), len);
+  }
+
+  int locate_index(const std::string attribute_name){
+    for(int i = 0; i < static_cast<int>(speces_.size()); i++){
+      if(strcmp(attribute_name.c_str(), speces_[i]->field().meta()->name()) == 0){
+        return i;
+      }
+    }
+    return -1;
+  }
 
   RC find_cell(const TupleCellSpec &spec, Value &cell) const override
   {

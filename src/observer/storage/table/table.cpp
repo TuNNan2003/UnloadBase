@@ -476,6 +476,14 @@ RC Table::delete_record(const Record &record)
   return rc;
 }
 
+RC Table::update_record(RowTuple* row_tuple, Value value, int index){
+  row_tuple->set_cell(index, value);
+  Record record_updated(row_tuple->record());
+  RID rid = row_tuple->record().rid();
+  RC rc = record_handler_->update_record(&rid, record_updated);
+  return rc;
+}
+
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;

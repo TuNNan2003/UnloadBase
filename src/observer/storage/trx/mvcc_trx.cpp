@@ -185,6 +185,11 @@ RC MvccTrx::delete_record(Table * table, Record &record)
   return RC::SUCCESS;
 }
 
+RC MvccTrx::update_record(Table* table, RowTuple* row_tuple, Value value, int index)
+{
+  return RC::SUCCESS;
+}
+
 RC MvccTrx::visit_record(Table *table, Record &record, bool readonly)
 {
   Field begin_field;

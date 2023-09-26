@@ -28,6 +28,7 @@ class Index;
 class IndexScanner;
 class RecordDeleter;
 class Trx;
+class RowTuple;
 
 /**
  * @brief 表
@@ -83,6 +84,7 @@ public:
    */
   RC insert_record(Record &record);
   RC delete_record(const Record &record);
+  RC update_record(RowTuple* row_tuple, Value value, int index);
   RC visit_record(const RID &rid, bool readonly, std::function<void(Record &)> visitor);
   RC get_record(const RID &rid, Record &record);
 
