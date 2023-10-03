@@ -154,6 +154,7 @@ LD_LIBRARY_PATH 是Linux环境中，运行时查找动态链接库的路径，�
 ## :alarm_clock:贡献时长
 [wuhuua](https://github.com/wuhuua)[![UnloadBase](https://wakatime.com/badge/user/e4826945-9108-492a-9ac8-2bc8d7dfb994/project/ac35ffd3-95b2-4e3d-90d3-c5b6e2ade501.svg)](https://wakatime.com/badge/user/e4826945-9108-492a-9ac8-2bc8d7dfb994/project/ac35ffd3-95b2-4e3d-90d3-c5b6e2ade501)
 [TuNNan](https://github.com/TuNNan2003)[![wakatime](https://wakatime.com/badge/user/b86b9fb4-9b8e-44ab-b86f-7428453fc563/project/063c742d-9237-496b-92ca-885172564e02.svg)](https://wakatime.com/badge/user/b86b9fb4-9b8e-44ab-b86f-7428453fc563/project/063c742d-9237-496b-92ca-885172564e02)
+[qcsmallblack](https://github.com/qcsmallblack)
 
 ## :sparkling_heart:License
 
