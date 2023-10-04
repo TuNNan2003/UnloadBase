@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/string.h"
 #include "attr/date.h"
 #include "attr/typecast.h"
+#include "algorithm/algorithm.h"
 
 const char *ATTR_TYPE_NAME[] = {"undefined", "chars", "ints", "floats", "booleans"};
 
@@ -264,28 +265,7 @@ int Value::compare(const Value &other) const
 bool Value::like(const Value& other) const {
   std::string s = this->get_string();
   std::string p = other.get_string();
-  int m = s.length();
-  int n = p.length();
-  std::vector<std::vector<int>> dp(m + 1, std::vector<int>(n + 1));
-  dp[0][0] = 1;
-  for(int i = 1; i <= n; ++i){
-    if(p[i - 1] == '%'){
-      dp[0][i] = 1;
-    }else{
-      break;
-    }
-  }
-  for(int i = 1; i <= m; ++i){
-    for(int j = 1; j <= n; ++j){
-      if(p[j - 1] == '%') {
-        dp[i][j] = dp[i][j - 1] | dp[i - 1][j];
-      }
-      else if(p[j - 1] == '?' || s[i - 1] == p[j - 1]){
-        dp[i][j] = dp[i - 1][j - 1];
-      }
-    }
-  }
-  return dp[m][n];
+  return Algorithm::wildcardMatching(s,p);
 }
 
 void Value::add(const Value& other){
