@@ -15,7 +15,9 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include <functional>
+#include <unordered_map>
 #include "storage/table/table_meta.h"
+#include "storage/var/var_record.h"
 
 struct RID;
 class Record;
@@ -100,6 +102,8 @@ public:
     return record_handler_;
   }
 
+  RC getVarHandler(std::string attr_name,VarRecordFileHandler* &handler) const;
+
 public:
   int32_t table_id() const { return table_meta_.table_id(); }
   const char *name() const;
@@ -124,5 +128,6 @@ private:
   TableMeta   table_meta_;
   DiskBufferPool *data_buffer_pool_ = nullptr;   /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_ = nullptr;  /// 记录操作
+  mutable std::unordered_map<std::string,VarRecordFileHandler> var_handlers_; /// 变长数据代理
   std::vector<Index *> indexes_;
 };

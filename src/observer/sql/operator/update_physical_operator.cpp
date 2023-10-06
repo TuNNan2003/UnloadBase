@@ -43,8 +43,8 @@ RC UpdatePhysicalOperator::next()
         RowTuple *row_tuple = static_cast<RowTuple *>(tuple);
         if(!index_find){
             index = row_tuple->locate_index(attribute_);
-            if(index_find == -1){
-                LOG_ERROR("Error attribute name %s", attribute_);
+            if(index == -1){
+                LOG_ERROR("Error attribute name %s", attribute_.c_str());
                 return RC::NOTFOUND;
             }
             index_find = true;

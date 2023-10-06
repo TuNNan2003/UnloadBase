@@ -19,6 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include "json/json.h"
 #include "common/log/log.h"
 #include "storage/trx/trx.h"
+#include "storage/var/var_record.h"
 
 using namespace std;
 
@@ -78,8 +79,13 @@ RC TableMeta::init(int32_t table_id, const char *name, int field_num, const Attr
       LOG_ERROR("Failed to init field meta. table name=%s, field name: %s", name, attr_info.name.c_str());
       return rc;
     }
-
-    field_offset += attr_info.length;
+    // 存储变长字段的长度设置为-1，但是偏移量计算时应以实际指针长度为准
+    if(attr_info.length==VARTYPELEN){
+      field_offset += varLenAttr::getByteNumULL();
+    }
+    else{
+      field_offset += attr_info.length;
+    }
   }
 
   record_size_ = field_offset;

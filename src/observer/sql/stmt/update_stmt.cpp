@@ -38,7 +38,7 @@ RC UpdateStmt::create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt)
 
   Table* table = db->find_table(update_sql.relation_name.c_str());
   if(nullptr == table){
-    LOG_WARN("no such table. db = %s, table_name=%s", db->name(), update_sql.relation_name);
+    LOG_WARN("no such table. db = %s, table_name=%s", db->name(), update_sql.relation_name.c_str());
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
 

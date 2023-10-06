@@ -174,7 +174,36 @@ public:
     FieldExpr *field_expr = speces_[index];
     const FieldMeta *field_meta = field_expr->field().meta();
     cell.set_type(field_meta->type());
-    cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
+    if(field_meta->len()==VARTYPELEN){
+      RC rc;
+      VarRecordFileHandler* handler;
+      char* var_data=nullptr;
+      
+      // 解析pointer
+      varLenPointer pointer=*((varLenPointer*)(this->record_->data() + field_meta->offset()));
+
+      // 查找相应field在table中的代理
+      rc=table_->getVarHandler(field_meta->name(),handler);
+      if (rc!=RC::SUCCESS){
+        LOG_ERROR("no such var handler in table, meta name is %s",field_meta->name());
+        return rc;
+      }
+
+      // 转换文件地址到内存地址
+      rc=handler->transVarAddress((char*)varLenAttr::parseAddr(pointer),var_data);
+      if(rc==RC::EMPTY){
+        LOG_ERROR("handler init error, no var file name");
+        return rc;
+      }else if(rc==RC::FILE_NOT_OPENED){
+        LOG_ERROR("file cannot be opened, path is %s",handler->getFullName());
+        return rc;
+      }
+
+      cell.set_data(var_data,varLenAttr::parseLen(pointer));
+    }
+    else{
+      cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
+    }
     return RC::SUCCESS;
   }
   

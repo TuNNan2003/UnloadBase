@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/field/field_meta.h"
 #include "common/log/log.h"
 #include "sql/parser/parse_defs.h"
+#include "storage/var/var_record.h"
 
 #include "json/json.h"
 
@@ -41,7 +42,7 @@ RC FieldMeta::init(const char *name, AttrType attr_type, int attr_offset, int at
     return RC::INVALID_ARGUMENT;
   }
 
-  if (AttrType::UNDEFINED == attr_type || attr_offset < 0 || attr_len <= 0) {
+  if (AttrType::UNDEFINED == attr_type || attr_offset < 0 || (attr_len <= 0 && attr_len != VARTYPELEN)) {
     LOG_WARN(
         "Invalid argument. name=%s, attr_type=%d, attr_offset=%d, attr_len=%d", name, attr_type, attr_offset, attr_len);
     return RC::INVALID_ARGUMENT;

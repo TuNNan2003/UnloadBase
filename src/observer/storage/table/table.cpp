@@ -117,6 +117,23 @@ RC Table::create(int32_t table_id,
     return rc;
   }
 
+  // 加载变长数据代理，初始化变长数据文件
+  for(FieldMeta meta:*table_meta_.field_metas()){
+    if(meta.len()==VARTYPELEN&&meta.visible()){
+        VarRecordFileHandler handler = VarRecordFileHandler(meta.name(),this->name(),base_dir);
+        this->var_handlers_.emplace(std::string(meta.name()),handler);
+        rc=handler.initFile();
+        if(rc==RC::EMPTY){
+          LOG_ERROR("handler init error, no name for var file");
+          return rc;
+        }
+        else if(rc==RC::FILE_NOT_EXIST){
+          LOG_ERROR("cannot init such file, name is %s", handler.getFullName());
+          return rc;
+        }
+    }
+  }
+
   base_dir_ = base_dir;
   LOG_INFO("Successfully create table %s:%s", base_dir, name);
   return rc;
@@ -137,6 +154,22 @@ RC Table::destory(const char* dir){
   if(unlink(data_file.c_str()) != 0){
     LOG_ERROR("Failed to remove data file %s, errno=%d", data_file.c_str(), errno);
     return RC::FILE_NOT_EXIST;
+  }
+
+  // 加载变长数据代理，删除变长数据文件
+  for(FieldMeta meta:*table_meta_.field_metas()){
+    if(meta.len()==VARTYPELEN&&meta.visible()){
+        VarRecordFileHandler handler = VarRecordFileHandler(meta.name(),this->name(),dir);
+        rc=handler.removeFile();
+        if(rc==RC::EMPTY){
+          LOG_ERROR("handler init error, no name for var file");
+          return rc;
+        }
+        else if(rc==RC::FILE_NOT_REMOVED){
+          LOG_ERROR("cannot remove such file, name is %s", handler.getFullName());
+          return rc;
+        }
+    }
   }
 
   const int index_num = table_meta_.index_num();
@@ -177,6 +210,17 @@ RC Table::open(const char *meta_file, const char *base_dir)
     LOG_ERROR("Failed to open table %s due to init record handler failed.", base_dir);
     // don't need to remove the data_file
     return rc;
+  }
+
+  // 加载变长数据代理，但不加载其中的数据
+  var_handlers_=std::unordered_map<std::string,VarRecordFileHandler>();
+  for(FieldMeta meta:*table_meta_.field_metas()){
+    if(meta.len()==VARTYPELEN&&meta.visible()){
+      var_handlers_.emplace(std::pair<std::string,VarRecordFileHandler>(
+          std::string(meta.name()),
+          VarRecordFileHandler(meta.name(),this->name(),base_dir)
+      ));
+    }
   }
 
   base_dir_ = base_dir;
@@ -322,14 +366,47 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value &value = values[i];
-    size_t copy_len = field->len();
-    if (field->type() == CHARS) {
+    int copy_len = field->len();
+
+    // 字符串数据加入终止符的长度，还需要考虑是不是变长类型(严格来说任何数据都要考虑)
+    if (field->type() == CHARS && copy_len!=VARTYPELEN) {
       const size_t data_len = value.length();
       if (copy_len > data_len) {
         copy_len = data_len + 1;
       }
     }
-    memcpy(record_data + field->offset(), value.data(), copy_len);
+    // 直接持久化变长数据
+    if(copy_len==VARTYPELEN){
+      copy_len=value.length();
+      
+      // 取出open table过程中加载的代理，可以避免在不存在的字段插入
+      if(this->var_handlers_.find(field->name())==this->var_handlers_.end()){
+        LOG_ERROR("no var file for this field, name is %s",field->name());
+        return RC::EMPTY;
+      }
+      VarRecordFileHandler* handler=&var_handlers_.at(field->name());
+      unsigned long long address;
+
+      // 插入数据到变长数据文件中
+      RC rc=handler->insert(address,value.data(),copy_len);
+      if(rc==RC::EMPTY){
+        LOG_ERROR("handler init error, empty file name");
+        return rc;
+      }
+      else if(rc==RC::FILE_NOT_OPENED){
+        LOG_ERROR("file not opened, full name is %s", handler->getFullName());
+        return rc;
+      }
+      varLenPointer pointer=varLenAttr::makeVarLenPointer(copy_len,address);
+      memcpy(record_data + field->offset(), &pointer, varLenAttr::getByteNumULL());
+
+      // 清除懒加载的内存
+      handler->flush();
+    }
+    else{
+      memcpy(record_data + field->offset(), value.data(), copy_len);
+    }
+
   }
 
   record.set_data_owner(record_data, record_size);
@@ -546,3 +623,11 @@ RC Table::sync()
   LOG_INFO("Sync table over. table=%s", name());
   return rc;
 }
+
+  RC Table::getVarHandler(std::string attr_name,VarRecordFileHandler* &handler) const{
+    if(this->var_handlers_.find(attr_name)!=this->var_handlers_.end()){
+      handler=&var_handlers_.at(attr_name);
+      return RC::SUCCESS;
+    }
+    return RC::NOTFOUND;
+  }
