@@ -16,25 +16,25 @@ See the Mulan PSL v2 for more details.
 
 #include "aggr_function.h"
 
-AggregateFunction AggregateFunctionFactory::CreateAggregateFunction(FunctionName func){
+AggregateFunction* AggregateFunctionFactory::CreateAggregateFunction(FunctionName func){
     switch (func){
         case FunctionName::AGGREGATE_AVG : {
-            return AvgAggregateFunction();
+            return new AvgAggregateFunction();
         }break;
         case FunctionName::AGGREGATE_COUNT : {
-            return CountAggregateFunction();
+            return new CountAggregateFunction();
         }break;
         case FunctionName::AGGREGATE_MAX : {
-            return MaxAggregateFunction();
+            return new MaxAggregateFunction();
         }break;
         case FunctionName::AGGREGATE_MIN : {
-            return MinAggregateFunction();
+            return new MinAggregateFunction();
         }break;
         case FunctionName::AGGREGATE_SUM : {
-            return SumAggregateFunction();
+            return new SumAggregateFunction();
         }break;
         default : {
-            return CountAggregateFunction();
+            return new CountAggregateFunction();
         }break;
     }
 }

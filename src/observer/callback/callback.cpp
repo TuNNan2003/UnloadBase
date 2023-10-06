@@ -35,7 +35,7 @@ void CallBack::callback(SQLStageEvent *sql_event,SessionEvent *event){
 std::vector<Value> CallBack::aggregate(SessionEvent *event,RC &rc){
   //根据聚合函数名称获得其指针
   std::vector<FunctionName> funcNames = *event->getFuncNames();
-  std::vector<AggregateFunction> AggregateFuncs(funcNames.size());
+  std::vector<AggregateFunction*> AggregateFuncs(funcNames.size());
   for(int i=0;i<AggregateFuncs.size();i++){
     AggregateFuncs[i] = AggregateFunctionFactory::CreateAggregateFunction(funcNames[i]);
   }
@@ -57,16 +57,23 @@ std::vector<Value> CallBack::aggregate(SessionEvent *event,RC &rc){
       {
         Value value;
         rc = tuple->cell_at(i, value);
-        AggregateFuncs[i].calc(value, aggregate_result[i]);
+        AggregateFuncs[i]->calc(value, aggregate_result[i]);
       }
     } while (RC::SUCCESS == (rc = sql_result->next_tuple(tuple)));
     for(int i = 0; i < funcNames.size(); i++){
-      AggregateFuncs[i].set(aggregate_result[i]);
+      AggregateFuncs[i]->set(aggregate_result[i]);
     }
   }
   else
   {
     LOG_WARN("Attempt to use aggregate function on an empty table");
+  }
+
+  // 删除聚合函数对象
+  for(AggregateFunction* func:AggregateFuncs){
+    if(func!=nullptr){
+      delete func;
+    }
   }
   return aggregate_result;
 }

@@ -75,5 +75,5 @@ public:
 class AggregateFunctionFactory{
 public: 
     AggregateFunctionFactory() {}
-    AggregateFunction static CreateAggregateFunction(FunctionName func);
+    static AggregateFunction* CreateAggregateFunction(FunctionName func);
 };
