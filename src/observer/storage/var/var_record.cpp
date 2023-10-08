@@ -86,6 +86,8 @@ RC VarRecordFileHandler::insert(unsigned long long &address,const char* insert_d
         address = static_cast<unsigned long long>(endPosition);
         file.write(insert_data, length);
         file.close();
+        // 重置内存
+        this->flush();
     } else {
         return RC::FILE_NOT_OPENED;
     }
@@ -116,6 +118,34 @@ RC VarRecordFileHandler::removeFile(){
     }
     if(unlink(this->fullName.c_str()) != 0){
         return RC::FILE_NOT_REMOVED;
+    }
+    return RC::SUCCESS;
+}
+
+RC VarRecordFileHandler::update(unsigned long long &address,const char* tgt_data,int srcLen,int tgtLen){
+    if(this->fullName.empty()){
+        return RC::EMPTY;
+    }
+    std::ofstream file(this->fullName, std::ios::in | std::ios::out | std::ios::binary);
+    if (file.is_open()) {
+        // 插入长度小于原本长度，在原本位置修改，同时更新懒加载
+        if(srcLen>=tgtLen){
+            file.seekp(address);
+            if(this->data!=nullptr){
+                memcpy(this->data+address,tgt_data,tgtLen);
+            }
+        }
+        // 插入长度大于原本长度，在新的位置修改，重置内存
+        else{
+            file.seekp(0, std::ios::end);
+            std::streampos endPosition = file.tellp();
+            address = static_cast<unsigned long long>(endPosition);
+            this->flush();
+        }
+        file.write(tgt_data,tgtLen);
+        file.close();
+    } else {
+        return RC::FILE_NOT_OPENED;
     }
     return RC::SUCCESS;
 }

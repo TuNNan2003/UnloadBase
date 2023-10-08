@@ -206,12 +206,6 @@ public:
     }
     return RC::SUCCESS;
   }
-  
-  void set_cell(int index, Value &value){
-    int offset = speces_[index]->field().meta()->offset();
-    int len = speces_[index]->field().meta()->len();
-    memcpy(record_->data() + offset, value.data(), len);
-  }
 
   int locate_index(const std::string attribute_name){
     for(int i = 0; i < static_cast<int>(speces_.size()); i++){
@@ -220,6 +214,10 @@ public:
       }
     }
     return -1;
+  }
+
+  const FieldMeta* getFieldMeta(int index){
+    return speces_[index]->field().meta();
   }
 
   RC find_cell(const TupleCellSpec &spec, Value &cell) const override

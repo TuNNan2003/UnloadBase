@@ -38,6 +38,8 @@ class VarRecordFileHandler{
         char* data=nullptr;
         std::string getFileName(std::string attr_name,std::string table_name);
         std::string getFilePathWithName(std::string attr_name,std::string table_name,const char *base_dir);
+        // 删除内存中加载的data，并且置data为nullptr
+        void flush();
     public:
         RC initFile();
         RC removeFile();
@@ -48,8 +50,8 @@ class VarRecordFileHandler{
         RC transVarAddress(char* file_addr, char* &memory_addr);
         // 直接插入操作
         RC insert(unsigned long long &address,const char* insert_data,int length);
-        // 删除内存中加载的data，并且置data为nullptr
-        void flush();
+        //更新操作中更新的数据为src_data，根据新旧长度对比选择追加或修改
+        RC update(unsigned long long &address,const char* tgt_data,int srcLen,int tgtLen);
         const char* getFullName(){
             return fullName.c_str();
         }
