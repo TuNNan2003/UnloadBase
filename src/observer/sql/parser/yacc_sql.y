@@ -120,6 +120,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   Value *                           value;
   enum CompOp                       comp;
   RelAttrSqlNode *                  rel_attr;
+  RelAttrSqlNode *                  attr_meta;
   std::vector<AttrInfoSqlNode> *    attr_infos;
   AttrInfoSqlNode *                 attr_info;
   Expression *                      expression;
@@ -147,6 +148,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <number>              number
 %type <comp>                comp_op
 %type <rel_attr>            rel_attr
+%type <attr_meta>           attr_meta
 %type <attr_infos>          attr_def_list
 %type <attr_info>           attr_def
 %type <value_list>          value_list
@@ -554,6 +556,54 @@ select_attr:
     ;
 
 rel_attr:
+    attr_meta{
+      $$ = $1;
+    }
+    | LENGTH_FUNC LBRACE attr_meta RBRACE{
+      $$ = $3;
+      $$->function_name = FunctionName::LENGTH; 
+    }
+    | MAX LBRACE attr_meta RBRACE{
+      $$ = $3;
+      $$->function_name = FunctionName::AGGREGATE_MAX;
+      $$->sql_type =  SqlCalculateType::AGGREGATE;   
+    }
+    | MIN LBRACE attr_meta RBRACE{
+      $$ = $3;
+      $$->function_name = FunctionName::AGGREGATE_MIN;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | COUNT LBRACE attr_meta RBRACE{
+      $$ = $3;
+      $$->function_name = FunctionName::AGGREGATE_COUNT;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | AVG LBRACE attr_meta RBRACE{
+      $$ = $3;
+      $$->function_name = FunctionName::AGGREGATE_AVG;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | SUM LBRACE attr_meta RBRACE{
+      $$ = $3;
+      $$->function_name = FunctionName::AGGREGATE_SUM;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+    }
+    | DATE_FORMAT_FUNC LBRACE attr_meta COMMA SSS RBRACE{
+      $$ = $3;
+      $$->param.str_info = $5; 
+      $$->param.type=ParamType::STR_PARAM;
+      $$->function_name = FunctionName::DATE_FORMAT; 
+      free($5);
+    }
+    | ROUND_FUNC LBRACE attr_meta COMMA number RBRACE{
+      $$ = $3;
+      $$->param.num_info.int_value_ = $5; 
+      $$->param.type=ParamType::INT_PARAM;
+      $$->function_name = FunctionName::ROUND; 
+    }
+    ;
+
+attr_meta:
     ID {
       $$ = new RelAttrSqlNode;
       $$->attribute_name = $1;
@@ -564,58 +614,6 @@ rel_attr:
       $$->relation_name  = $1;
       $$->attribute_name = $3;
       free($1);
-      free($3);
-    }
-    | LENGTH_FUNC LBRACE ID RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->function_name = FunctionName::LENGTH; 
-      free($3);
-    }
-    | MAX LBRACE ID RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->function_name = FunctionName::AGGREGATE_MAX;
-      $$->sql_type =  SqlCalculateType::AGGREGATE;   
-    }
-    | MIN LBRACE ID RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->function_name = FunctionName::AGGREGATE_MIN;
-      $$->sql_type = SqlCalculateType::AGGREGATE;
-    }
-    | COUNT LBRACE ID RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->function_name = FunctionName::AGGREGATE_COUNT;
-      $$->sql_type = SqlCalculateType::AGGREGATE;
-    }
-    | AVG LBRACE ID RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->function_name = FunctionName::AGGREGATE_AVG;
-      $$->sql_type = SqlCalculateType::AGGREGATE;
-    }
-    | SUM LBRACE ID RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->function_name = FunctionName::AGGREGATE_SUM;
-      $$->sql_type = SqlCalculateType::AGGREGATE;
-    }
-    | DATE_FORMAT_FUNC LBRACE ID COMMA SSS RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->param.str_info = $5; 
-      $$->param.type=ParamType::STR_PARAM;
-      $$->function_name = FunctionName::DATE_FORMAT; 
-      free($3);
-    }
-    | ROUND_FUNC LBRACE ID COMMA number RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->attribute_name = $3;
-      $$->param.num_info.int_value_ = $5; 
-      $$->param.type=ParamType::INT_PARAM;
-      $$->function_name = FunctionName::ROUND; 
       free($3);
     }
     ;
