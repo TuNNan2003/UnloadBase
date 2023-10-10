@@ -17,6 +17,10 @@ See the Mulan PSL v2 for more details.
 #pragma once
 
 #include "attr/date.h"
+#include "sql/parser/value.h"
+#include "callback/callbackInfo.h"
+
+#include <string>
 
 #define DATE_FORMAT_YEAR   'Y'
 #define DATE_FORMAT_MONTH  'M'
@@ -42,10 +46,11 @@ enum SqlCalculateType{
 
 class SQLFunction{
     public:
+        static void calc(Value &value,FunctionName name,CallbackParams param);
+    private:
         static int length(const char* str);
         static float round(float num,int mark);
-        static const char* date_format(std::shared_ptr<Date> date,const char* fmt);
-    private:
+        static const char* date_format(std::shared_ptr<Date> date,std::string fmt);
         static const char* date_format(int year,int day,int month,const char* fmt);
         static char toBiggerCase(char ch);
 };

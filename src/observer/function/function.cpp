@@ -18,6 +18,28 @@ See the Mulan PSL v2 for more details.
 #include "function.h"
 #include <cstdio>
 
+void SQLFunction::calc(Value &value,FunctionName name,CallbackParams param){
+    switch (name)
+    {
+    case FunctionName::LENGTH:{
+        value.set_int(length(value.get_string().c_str()));
+    }break;
+    case FunctionName::ROUND:{
+        if(param.type==ParamType::INT_PARAM){
+            value.set_float(round(value.get_float(),param.num_info.int_value_));
+        }
+    }break;
+    case FunctionName::DATE_FORMAT:{
+        if(param.type==ParamType::STR_PARAM){
+            value.set_string(date_format(value.get_date(),param.str_info));
+        }
+    }break;
+    default:
+        break;
+    }
+}
+
+
 int SQLFunction::length(const char* str){
     int len=0;
     const char * ptr=str;
@@ -38,8 +60,9 @@ float SQLFunction::round(float num, int mark){
     return res;
 }
 
-const char* SQLFunction::date_format(std::shared_ptr<Date> date,const char* fmt){
-    return date_format(date->getYear(),date->getMonth(),date->getDay(),fmt);
+const char* SQLFunction::date_format(std::shared_ptr<Date> date,std::string fmt){
+    const char* fmtDate=date_format(date->getYear(),date->getMonth(),date->getDay(),fmt.c_str());
+    return fmtDate;
 }
 
 const char* SQLFunction::date_format(int year,int month,int day,const char* fmt){

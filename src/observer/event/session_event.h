@@ -47,36 +47,9 @@ public:
 
   SqlDebug &sql_debug() { return sql_debug_; }
 
-  void initNames(){funcNames=std::vector<FunctionName>();}
-
-  void addFuncName(FunctionName funcName){funcNames.push_back(funcName);}
-
-  std::vector<FunctionName>* getFuncNames(){
-    return &funcNames;
-  }
-
-  std::vector<SqlCalculateType>* getSqlCalType(){
-    return &sql_calculate_type;
-  }
-
-  void addSqlCalculateType(const SqlCalculateType sql_cal_type){
-    sql_calculate_type.push_back(sql_cal_type);
-  }
-  
-  void addCallBackInfo(CallbackParams param){
-    callbackInfo.addCallbackInfo(param);
-  }
-
-  std::vector<CallbackParams>* getParams(){
-    return callbackInfo.getCallbackInfo();
-  }
-
 private:
   Communicator *communicator_ = nullptr;  ///< 与客户端通讯的对象
   SqlResult     sql_result_;              ///< SQL执行结果
   SqlDebug      sql_debug_;               ///< SQL调试信息
   std::string   query_;                   ///< SQL语句
-  std::vector<FunctionName> funcNames;    ///< 回调函数名称
-  std::vector<SqlCalculateType> sql_calculate_type;
-  CallbackInfo callbackInfo;              ///< 回调函数其他参数
 };

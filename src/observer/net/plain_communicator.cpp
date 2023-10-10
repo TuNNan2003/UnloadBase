@@ -254,11 +254,12 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
 
   rc = RC::SUCCESS;
   Tuple *tuple = nullptr;
-  std::vector<FunctionName> funcNames = *event->getFuncNames();
-  std::vector<SqlCalculateType> sql_cal_type = *event->getSqlCalType();
-  std::vector<CallbackParams> params = *event->getParams();
+  bool aggrFlag=false;
+  if(event->sql_result()->getCallbackSet()!=nullptr){
+    aggrFlag=event->sql_result()->getCallbackSet()->checkSqlCalType();
+  }
 
-  if (sql_cal_type.size() != 0 && *sql_cal_type.begin() == SqlCalculateType::AGGREGATE)
+  if (aggrFlag)
   {
     std::vector<Value> aggregate_result=CallBack::aggregate(event,rc);
 
@@ -316,11 +317,6 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
 
         Value value;
         rc = tuple->cell_at(i, value);
-        if (i < funcNames.size())
-        {
-          value.setFunctionName(funcNames[i]);
-          value.setParam(params[i]);
-        }
         if (rc != RC::SUCCESS)
         {
           sql_result->close();

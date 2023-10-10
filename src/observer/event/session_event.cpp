@@ -18,9 +18,7 @@ See the Mulan PSL v2 for more details. */
 SessionEvent::SessionEvent(Communicator *comm) 
     : communicator_(comm),
     sql_result_(communicator_->session())
-{
-  this->callbackInfo=CallbackInfo();
-}
+{}
 
 SessionEvent::~SessionEvent()
 {

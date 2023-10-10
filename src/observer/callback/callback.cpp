@@ -16,25 +16,28 @@ See the Mulan PSL v2 for more details.
 
 #include "callback.h"
 #include "function/aggr_function.h"
+#include "callbackSet.h"
 
 
 void CallBack::callback(SQLStageEvent *sql_event,SessionEvent *event){
     ParsedSqlNode *sql_node = sql_event->sql_node().get();
     if(sql_node->flag==SCF_SELECT){
         SelectSqlNode select_sql= sql_node->selection;
-        event->initNames();
+        SqlResult* result=event->sql_result();
+        CallbackSet* callbackSet=new CallbackSet();
         for (int i = static_cast<int>(select_sql.attributes.size()) - 1; i >= 0; i--) {
             const RelAttrSqlNode &relation_attr = select_sql.attributes[i];
-            event->addFuncName(relation_attr.function_name);
-            event->addSqlCalculateType(relation_attr.sql_type);
-            event->addCallBackInfo(relation_attr.param);
+            callbackSet->addFuncName(relation_attr.function_name);
+            callbackSet->addSqlCalculateType(relation_attr.sql_type);
+            callbackSet->addCallBackInfo(relation_attr.param);
         }
+        result->setCallBackSet(callbackSet);
     }
 }
 
 std::vector<Value> CallBack::aggregate(SessionEvent *event,RC &rc){
   //根据聚合函数名称获得其指针
-  std::vector<FunctionName> funcNames = *event->getFuncNames();
+  std::vector<FunctionName> funcNames = *event->sql_result()->getCallbackSet()->getFuncNames();
   std::vector<AggregateFunction*> AggregateFuncs(funcNames.size());
   for(int i=0;i<AggregateFuncs.size();i++){
     AggregateFuncs[i] = AggregateFunctionFactory::CreateAggregateFunction(funcNames[i]);

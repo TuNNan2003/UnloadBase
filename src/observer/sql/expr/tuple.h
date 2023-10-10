@@ -24,6 +24,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/parser/value.h"
 #include "sql/expr/expression.h"
 #include "storage/record/record.h"
+#include "callback/callbackSet.h"
 
 class Table;
 
@@ -126,6 +127,14 @@ public:
     }
     return str;
   }
+
+  virtual void setCallbackSet(CallbackSet* callbackSet){
+    this->callbackSet=callbackSet;
+  }
+
+protected:
+  // 保存回调内容指针
+  CallbackSet* callbackSet=nullptr;
 };
 
 /**
@@ -203,6 +212,10 @@ public:
     }
     else{
       cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
+    }
+    // 执行回调内容
+    if(this->callbackSet!=nullptr){
+      this->callbackSet->calc(index,cell);
     }
     return RC::SUCCESS;
   }
@@ -309,7 +322,12 @@ public:
     }
 
     const TupleCellSpec *spec = speces_[index];
-    return tuple_->find_cell(*spec, cell);
+    RC rc=tuple_->find_cell(*spec, cell);
+    // 执行回调内容
+    if(this->callbackSet!=nullptr){
+      this->callbackSet->calc(index,cell);
+    }
+    return rc;
   }
 
   RC find_cell(const TupleCellSpec &spec, Value &cell) const override

@@ -172,39 +172,19 @@ std::string Value::to_string() const
   std::stringstream os;
   switch (attr_type_) {
     case DATES: {
-      if(funcName_==FunctionName::DATE_FORMAT){
-        if(param_.type==ParamType::STR_PARAM){
-          os << SQLFunction::date_format(date_value_,param_.str_info.c_str());
-        }else{
-          LOG_WARN("wrong param type, should be string");
-          os << SQLFunction::date_format(date_value_,"%Y-%m-%d");
-        }
-        break;
-      }
       return date_value_->toString();
     }
     case INTS: {
       os << num_value_.int_value_;
     } break;
     case FLOATS: {
-      if(funcName_==FunctionName::ROUND){
-        if(param_.type==ParamType::INT_PARAM){
-          os << SQLFunction::round(num_value_.float_value_,param_.num_info.int_value_);
-          break;
-        }
-      }
       os << common::double_to_str(num_value_.float_value_);
     } break;
     case BOOLEANS: {
       os << num_value_.bool_value_;
     } break;
     case CHARS: {
-      if(funcName_==FunctionName::LENGTH){
-        os << SQLFunction::length(str_value_.c_str());
-      }
-      else{
         os << str_value_;
-      }
     } break;
     default: {
       LOG_WARN("unsupported attr type: %d", attr_type_);
@@ -408,20 +388,4 @@ bool Value::get_boolean() const
     }
   }
   return false;
-}
-
-void Value::setFunctionName(FunctionName funcName){
-  this->funcName_=funcName;
-}
-
-FunctionName Value::getFunctionName(){
-  return funcName_;
-}
-
-void Value::setParam(CallbackParams param){
-  this->param_=param;
-}
-
-CallbackParams Value::getParam(){
-  return param_;
 }
