@@ -17,7 +17,6 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 
 #include "attr/date.h"
-#include "callback/callbackInfo.h"
 
 /**
  * @brief 属性的类型

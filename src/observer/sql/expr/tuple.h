@@ -24,7 +24,6 @@ See the Mulan PSL v2 for more details. */
 #include "sql/parser/value.h"
 #include "sql/expr/expression.h"
 #include "storage/record/record.h"
-#include "callback/callbackSet.h"
 
 class Table;
 
@@ -128,13 +127,6 @@ public:
     return str;
   }
 
-  virtual void setCallbackSet(CallbackSet* callbackSet){
-    this->callbackSet=callbackSet;
-  }
-
-protected:
-  // 保存回调内容指针
-  CallbackSet* callbackSet=nullptr;
 };
 
 /**
@@ -213,10 +205,6 @@ public:
     else{
       cell.set_data(this->record_->data() + field_meta->offset(), field_meta->len());
     }
-    // 执行回调内容
-    if(this->callbackSet!=nullptr){
-      this->callbackSet->calc(index,cell);
-    }
     return RC::SUCCESS;
   }
 
@@ -289,7 +277,10 @@ private:
 class ProjectTuple : public Tuple 
 {
 public:
-  ProjectTuple() = default;
+  ProjectTuple(const std::vector<std::unique_ptr<Expression>> &expressions)
+  :expressions_(expressions)
+  {}
+  
   virtual ~ProjectTuple()
   {
     for (TupleCellSpec *spec : speces_) {
@@ -309,24 +300,13 @@ public:
   }
   int cell_num() const override
   {
-    return speces_.size();
+    return expressions_.size();
   }
 
   RC cell_at(int index, Value &cell) const override
   {
-    if (index < 0 || index >= static_cast<int>(speces_.size())) {
-      return RC::INTERNAL;
-    }
-    if (tuple_ == nullptr) {
-      return RC::INTERNAL;
-    }
-
-    const TupleCellSpec *spec = speces_[index];
-    RC rc=tuple_->find_cell(*spec, cell);
-    // 执行回调内容
-    if(this->callbackSet!=nullptr){
-      this->callbackSet->calc(index,cell);
-    }
+    const std::unique_ptr<Expression> &expr = expressions_[index];
+    RC rc = expr->get_value(*tuple_, cell);
     return rc;
   }
 
@@ -348,6 +328,7 @@ public:
 private:
   std::vector<TupleCellSpec *> speces_;
   Tuple *tuple_ = nullptr;
+  const std::vector<std::unique_ptr<Expression>> &expressions_;
 };
 
 class ExpressionTuple : public Tuple 

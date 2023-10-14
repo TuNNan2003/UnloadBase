@@ -119,7 +119,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   ConditionSqlNode *                condition;
   Value *                           value;
   enum CompOp                       comp;
-  RelAttrSqlNode *                  rel_attr;
+  ExpressionSqlNode *               rel_attr;
+  RelAttrSqlNode *                  id_meta;
   RelAttrSqlNode *                  attr_meta;
   std::vector<AttrInfoSqlNode> *    attr_infos;
   AttrInfoSqlNode *                 attr_info;
@@ -127,7 +128,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   std::vector<Expression *> *       expression_list;
   std::vector<Value> *              value_list;
   std::vector<ConditionSqlNode> *   condition_list;
-  std::vector<RelAttrSqlNode> *     rel_attr_list;
+  std::vector<ExpressionSqlNode*>*  rel_attr_list;
   std::vector<std::string> *        relation_list;
   char *                            string;
   int                               number;
@@ -149,6 +150,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <comp>                comp_op
 %type <rel_attr>            rel_attr
 %type <attr_meta>           attr_meta
+%type <id_meta>             id_meta
 %type <attr_infos>          attr_def_list
 %type <attr_info>           attr_def
 %type <value_list>          value_list
@@ -538,64 +540,112 @@ expression:
 
 select_attr:
     '*' {
-      $$ = new std::vector<RelAttrSqlNode>;
+      $$ = new std::vector<ExpressionSqlNode*>;
+      ExpressionSqlNode* expr=new ExpressionSqlNode;
       RelAttrSqlNode attr;
       attr.relation_name  = "";
       attr.attribute_name = "*";
-      $$->emplace_back(attr);
+      expr->attr=attr;
+      expr->type=EXPRTYPE::ATTR;
+      $$->emplace_back(expr);
     }
     | rel_attr attr_list {
       if ($2 != nullptr) {
         $$ = $2;
       } else {
-        $$ = new std::vector<RelAttrSqlNode>;
+        $$ = new std::vector<ExpressionSqlNode*>;
       }
-      $$->emplace_back(*$1);
-      delete $1;
+      $$->emplace_back($1);
     }
     ;
 
 rel_attr:
-    attr_meta{
+    rel_attr '+' rel_attr{
+      $$ = new ExpressionSqlNode;
+      $$->left=$1;
+      $$->right=$3;
+      $$->calc=CalcOp::ADD;
+      $$->type=EXPRTYPE::EXPR;
+    }
+    | rel_attr '-' rel_attr{
+      $$ = new ExpressionSqlNode;
+      $$->left=$1;
+      $$->right=$3;
+      $$->calc=CalcOp::SUB;
+      $$->type=EXPRTYPE::EXPR;
+    }
+    | rel_attr '*' rel_attr{
+      $$ = new ExpressionSqlNode;
+      $$->left=$1;
+      $$->right=$3;
+      $$->calc=CalcOp::MUL;
+      $$->type=EXPRTYPE::EXPR;
+    }
+    | rel_attr '/' rel_attr{
+      $$ = new ExpressionSqlNode;
+      $$->left=$1;
+      $$->right=$3;
+      $$->calc=CalcOp::DIV;
+      $$->type=EXPRTYPE::EXPR;
+    }
+    | LBRACE rel_attr RBRACE{
+      $$ = $2;
+    }
+    | attr_meta{
+      $$ = new ExpressionSqlNode;
+      $$->attr=*$1;
+      $$->type=EXPRTYPE::ATTR;
+      free($1);
+    }
+    | value{
+      $$ = new ExpressionSqlNode;
+      $$->value=*$1;
+      $$->type=EXPRTYPE::VAL;
+      delete $1;
+    }
+    ;
+
+attr_meta:
+    id_meta{
       $$ = $1;
     }
-    | LENGTH_FUNC LBRACE attr_meta RBRACE{
+    | LENGTH_FUNC LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::LENGTH; 
     }
-    | MAX LBRACE attr_meta RBRACE{
+    | MAX LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_MAX;
       $$->sql_type =  SqlCalculateType::AGGREGATE;   
     }
-    | MIN LBRACE attr_meta RBRACE{
+    | MIN LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_MIN;
       $$->sql_type = SqlCalculateType::AGGREGATE;
     }
-    | COUNT LBRACE attr_meta RBRACE{
+    | COUNT LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_COUNT;
       $$->sql_type = SqlCalculateType::AGGREGATE;
     }
-    | AVG LBRACE attr_meta RBRACE{
+    | AVG LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_AVG;
       $$->sql_type = SqlCalculateType::AGGREGATE;
     }
-    | SUM LBRACE attr_meta RBRACE{
+    | SUM LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_SUM;
       $$->sql_type = SqlCalculateType::AGGREGATE;
     }
-    | DATE_FORMAT_FUNC LBRACE attr_meta COMMA SSS RBRACE{
+    | DATE_FORMAT_FUNC LBRACE id_meta COMMA SSS RBRACE{
       $$ = $3;
       $$->param.str_info = $5; 
       $$->param.type=ParamType::STR_PARAM;
       $$->function_name = FunctionName::DATE_FORMAT; 
       free($5);
     }
-    | ROUND_FUNC LBRACE attr_meta COMMA number RBRACE{
+    | ROUND_FUNC LBRACE id_meta COMMA number RBRACE{
       $$ = $3;
       $$->param.num_info.int_value_ = $5; 
       $$->param.type=ParamType::INT_PARAM;
@@ -603,7 +653,7 @@ rel_attr:
     }
     ;
 
-attr_meta:
+id_meta:
     ID {
       $$ = new RelAttrSqlNode;
       $$->attribute_name = $1;
@@ -627,11 +677,10 @@ attr_list:
       if ($3 != nullptr) {
         $$ = $3;
       } else {
-        $$ = new std::vector<RelAttrSqlNode>;
+        $$ = new std::vector<ExpressionSqlNode *>;
       }
 
-      $$->emplace_back(*$2);
-      delete $2;
+      $$->emplace_back($2);
     }
     ;
 
@@ -685,7 +734,7 @@ condition_list:
     }
     ;
 condition:
-    rel_attr comp_op value
+    attr_meta comp_op value
     {
       $$ = new ConditionSqlNode;
       $$->left_is_attr = 1;
@@ -709,7 +758,7 @@ condition:
       delete $1;
       delete $3;
     }
-    | rel_attr comp_op rel_attr
+    | attr_meta comp_op attr_meta
     {
       $$ = new ConditionSqlNode;
       $$->left_is_attr = 1;
@@ -721,7 +770,7 @@ condition:
       delete $1;
       delete $3;
     }
-    | value comp_op rel_attr
+    | value comp_op attr_meta
     {
       $$ = new ConditionSqlNode;
       $$->left_is_attr = 0;

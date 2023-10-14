@@ -34,7 +34,7 @@ class SqlResult
 public:
   SqlResult(Session *session);
   ~SqlResult()
-  {if(callbackSet!=nullptr) delete callbackSet;}
+  {}
 
   void set_tuple_schema(const TupleSchema &schema);
   void set_return_code(RC rc)
@@ -65,19 +65,32 @@ public:
     return state_string_;
   }
 
+  const std::vector<std::string> &exprRawText() const{
+    return exprRawText_;
+  }
+
+  void set_exprRawText(std::vector<std::string> &exprRawText){
+    exprRawText_.swap(exprRawText);
+  }
+
+  bool isAggr(){
+    return aggrFlag_;
+  }
+
+  void setIsAggr(bool aggrFlag){
+    aggrFlag_ = aggrFlag;
+  }
+
   RC open();
   RC close();
   RC next_tuple(Tuple *&tuple);
-
-  void setCallBackSet(CallbackSet* callbackSet){this->callbackSet=callbackSet;}
-
-  CallbackSet* getCallbackSet(){return this->callbackSet;}
 
 private:
   Session *session_ = nullptr; ///< 当前所属会话
   std::unique_ptr<PhysicalOperator> operator_;  ///< 执行计划
   TupleSchema tuple_schema_;   ///< 返回的表头信息。可能有也可能没有
+  std::vector<std::string> exprRawText_; ///< 原始表达式字符串，应对复杂的select查询
   RC return_code_ = RC::SUCCESS;
+  bool aggrFlag_;
   std::string state_string_;
-  CallbackSet* callbackSet=nullptr;     ///< 回调内容实体
 };

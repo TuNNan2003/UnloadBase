@@ -28,31 +28,31 @@ See the Mulan PSL v2 for more details.
 class AggregateFunction{
 public:
     AggregateFunction() : begin_flag(true) {}
-    virtual ~AggregateFunction() { }
-    virtual void calc(Value value, Value& res) {return; }
-    virtual void set(Value& res){};
+    virtual void calc(Value value) {return; }
+    virtual void set(Value& _res){};
 protected:
     bool begin_flag;
+    Value res;
 };
 
 class MaxAggregateFunction : public AggregateFunction{
 public:
     MaxAggregateFunction() : AggregateFunction() {}
-    void calc(Value value, Value& res); 
-    void set(Value& res){return;};
+    void calc(Value value); 
+    void set(Value& _res){this->res=_res; return;}
 };
 
 class MinAggregateFunction : public AggregateFunction{
 public:
     MinAggregateFunction() : AggregateFunction() {}
-    void calc(Value value, Value& res);
-    void set(Value& res){return;};
+    void calc(Value value);
+    void set(Value& _res){this->res=_res; return;}
 };
 
 class AvgAggregateFunction : public AggregateFunction{
 public:
     AvgAggregateFunction() : AggregateFunction() {}
-    void calc(Value value, Value& res);
+    void calc(Value value);
     void set(Value& res);
 private:
     int count;
@@ -61,19 +61,19 @@ private:
 class SumAggregateFunction : public AggregateFunction{
 public:
     SumAggregateFunction() : AggregateFunction() {}
-    void calc(Value value, Value& res);
-    void set(Value& res){return;};
+    void calc(Value value);
+    void set(Value& _res){this->res=_res; return;}
 };
 
 class CountAggregateFunction : public AggregateFunction{
 public:
     CountAggregateFunction() : AggregateFunction() {}
-    void calc(Value value, Value& res);
-    void set(Value& res){return;};
+    void calc(Value value);
+    void set(Value& _res){this->res=_res; return;}
 };
 
 class AggregateFunctionFactory{
 public: 
     AggregateFunctionFactory() {}
-    static AggregateFunction* CreateAggregateFunction(FunctionName func);
+    static std::unique_ptr<AggregateFunction> CreateAggregateFunction(FunctionName func);
 };

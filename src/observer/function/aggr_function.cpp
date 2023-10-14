@@ -16,30 +16,30 @@ See the Mulan PSL v2 for more details.
 
 #include "aggr_function.h"
 
-AggregateFunction* AggregateFunctionFactory::CreateAggregateFunction(FunctionName func){
+ std::unique_ptr<AggregateFunction> AggregateFunctionFactory::CreateAggregateFunction(FunctionName func){
     switch (func){
         case FunctionName::AGGREGATE_AVG : {
-            return new AvgAggregateFunction();
+            return std::make_unique<AvgAggregateFunction>();
         }break;
         case FunctionName::AGGREGATE_COUNT : {
-            return new CountAggregateFunction();
+            return std::make_unique<CountAggregateFunction>();
         }break;
         case FunctionName::AGGREGATE_MAX : {
-            return new MaxAggregateFunction();
+            return std::make_unique<MaxAggregateFunction>();
         }break;
         case FunctionName::AGGREGATE_MIN : {
-            return new MinAggregateFunction();
+            return std::make_unique<MinAggregateFunction>();
         }break;
         case FunctionName::AGGREGATE_SUM : {
-            return new SumAggregateFunction();
+            return std::make_unique<SumAggregateFunction>();
         }break;
         default : {
-            return new CountAggregateFunction();
+            return nullptr;
         }break;
     }
 }
 
-void MaxAggregateFunction::calc(Value value, Value& res){
+void MaxAggregateFunction::calc(Value value){
     if(begin_flag){
         std::swap(res, value);
         begin_flag = false;
@@ -50,7 +50,7 @@ void MaxAggregateFunction::calc(Value value, Value& res){
     }
 }
 
-void MinAggregateFunction::calc(Value value, Value& res){
+void MinAggregateFunction::calc(Value value){
     if(begin_flag){
         std::swap(res, value);
         begin_flag = false;
@@ -61,7 +61,7 @@ void MinAggregateFunction::calc(Value value, Value& res){
     }
 }
 
-void SumAggregateFunction::calc(Value value, Value& res){
+void SumAggregateFunction::calc(Value value){
     if(begin_flag){
         std::swap(value, res);
         begin_flag = false;
@@ -70,7 +70,7 @@ void SumAggregateFunction::calc(Value value, Value& res){
     }
 }
 
-void AvgAggregateFunction::calc(Value value, Value& res){
+void AvgAggregateFunction::calc(Value value){
     if(begin_flag){
         std::swap(res, value);
         count = 1;
@@ -81,13 +81,13 @@ void AvgAggregateFunction::calc(Value value, Value& res){
     }
 }
 
-void AvgAggregateFunction::set(Value& res){
+void AvgAggregateFunction::set(Value& res_){
     if(count != 0){
-        res.set_float(res.get_float() / count);
+        res_.set_float(res.get_float() / count);
     }
 }
 
-void CountAggregateFunction::calc(Value value, Value& res){
+void CountAggregateFunction::calc(Value value){
     if(begin_flag){
         res.set_int(1);
         begin_flag = false;

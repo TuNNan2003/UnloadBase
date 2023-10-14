@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/rc.h"
 #include "sql/stmt/stmt.h"
 #include "storage/field/field.h"
+#include "function/aggr_function.h"
 
 class FieldMeta;
 class FilterStmt;
@@ -49,17 +50,22 @@ public:
   {
     return tables_;
   }
-  const std::vector<Field> &query_fields() const
+  std::vector<std::unique_ptr<Expression> > &query_exprs()
   {
-    return query_fields_;
+    return exprs_;
   }
   FilterStmt *filter_stmt() const
   {
     return filter_stmt_;
   }
 
+  bool isAggr(){
+    return this->aggrFlag_;
+  }
+
 private:
-  std::vector<Field> query_fields_;
+  std::vector<std::unique_ptr<Expression> > exprs_;
+  bool aggrFlag_;
   std::vector<Table *> tables_;
   FilterStmt *filter_stmt_ = nullptr;
   bool joinFlag_=false;

@@ -18,5 +18,6 @@ See the Mulan PSL v2 for more details.
 
 class Algorithm{
     public:
-        bool static wildcardMatching(std::string text,std::string pattern);
+        static bool wildcardMatching(std::string text,std::string pattern);
+        static std::vector<std::string> splitAttr(std::string sql,int part);
 };

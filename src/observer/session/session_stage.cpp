@@ -27,7 +27,6 @@ See the Mulan PSL v2 for more details. */
 #include "net/server.h"
 #include "net/communicator.h"
 #include "session/session.h"
-#include "callback/callback.h"
 
 using namespace common;
 
@@ -103,9 +102,6 @@ void SessionStage::handle_request(StageEvent *event)
   sev->session()->set_current_request(sev);
   SQLStageEvent *sql_event = new SQLStageEvent(sev, sql);
   (void)handle_sql(sql_event);
-
-  // 处理回调函数
-  CallBack::callback(sql_event,sev);
 
   Communicator *communicator = sev->get_communicator();
   bool need_disconnect = false;

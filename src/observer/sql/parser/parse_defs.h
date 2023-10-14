@@ -23,8 +23,6 @@ See the Mulan PSL v2 for more details. */
 
 #include "function/function.h"
 
-#include "callback/callbackInfo.h"
-
 class Expression;
 
 /**
@@ -44,7 +42,7 @@ struct RelAttrSqlNode
   std::string attribute_name;  ///< attribute name              属性名
   FunctionName function_name=NULLFUNC; ///< function name       函数名
   SqlCalculateType sql_type=NULLSql;
-  CallbackParams param;        ///< callback param              函数参数
+  FunctionParams param;        ///< callback param              函数参数
 };
 
 /**
@@ -61,6 +59,29 @@ enum CompOp
   GREAT_THAN,   ///< ">"
   LIKE_OP,      ///< "LIKE"
   NO_OP       
+};
+
+/**
+ * @brief 描述二元运算运算符
+ * @ingroup SQLParser
+ */
+enum CalcOp
+{
+  ADD,           ///< "+"
+  SUB,           ///< "-"
+  MUL,           ///< "*"
+  DIV,           ///< "/"
+};
+
+/**
+ * @brief 递归类型表达式内容枚举
+ * @ingroup SQLParser
+ */
+enum EXPRTYPE
+{
+  EXPR,           ///< 子表达式
+  VAL,            ///< 数值
+  ATTR,           ///< 字段
 };
 
 /**
@@ -85,6 +106,27 @@ struct ConditionSqlNode
 };
 
 /**
+ * @brief 表示一个字段表达式
+ * @ingroup SQLParser
+ * @details 字段表达式应该支持各种类型的表达式
+ * 内容与上表示单值的时候应该left与right均为空，否则认为是表达式
+ * 下面用枚举的方式来表示
+ * ID OP ID
+ * ID OP Value
+ * Value OP Value
+ * Function(ID) OP Function(ID)
+ * Function(ID) OP Value
+ */
+struct ExpressionSqlNode{ 
+  Value              value; 
+  RelAttrSqlNode     attr;
+  EXPRTYPE           type;
+  ExpressionSqlNode* left=nullptr;
+  ExpressionSqlNode* right=nullptr; 
+  CalcOp             calc;
+};
+
+/**
  * @brief 描述一个select语句
  * @ingroup SQLParser
  * @details 一个正常的select语句描述起来比这个要复杂很多，这里做了简化。
@@ -97,9 +139,10 @@ struct ConditionSqlNode
 
 struct SelectSqlNode
 {
-  std::vector<RelAttrSqlNode>     attributes;                 ///< attributes in select clause
+  std::vector<ExpressionSqlNode*>  attributes;                ///< attributes in select clause
   std::vector<std::string>        relations;                  ///< 查询的表
   std::vector<ConditionSqlNode>   conditions;                 ///< 查询条件，使用AND串联起来多个条件
+  std::string                     selectRaw;                  ///< 查询字段原始字符串
   bool joinFlag=false;                                        ///< Join flag，用于判断relation中表的关系
 };
 

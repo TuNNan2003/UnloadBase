@@ -25,6 +25,9 @@ class TableGetLogicalOperator : public LogicalOperator
 {
 public:
   TableGetLogicalOperator(Table *table, const std::vector<Field> &fields, bool readonly);
+
+  TableGetLogicalOperator(Table *table, bool readonly);
+
   virtual ~TableGetLogicalOperator() = default;
 
   LogicalOperatorType type() const override
@@ -43,6 +46,7 @@ public:
 
 private:
   Table *table_ = nullptr;
+  // 本质上说table_get并没有一个存入查询字段的必要性，也没有返回的方法
   std::vector<Field> fields_;
   bool readonly_ = false;
 

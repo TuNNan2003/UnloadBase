@@ -19,8 +19,7 @@ See the Mulan PSL v2 for more details. */
 
 #include "common/seda/stage_event.h"
 #include "sql/executor/sql_result.h"
-#include "event/sql_debug.h"
-#include "callback/callbackInfo.h"  
+#include "event/sql_debug.h" 
 #include "function/function.h"
 
 class Session;

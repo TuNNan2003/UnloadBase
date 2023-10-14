@@ -18,7 +18,7 @@ See the Mulan PSL v2 for more details.
 #include "function.h"
 #include <cstdio>
 
-void SQLFunction::calc(Value &value,FunctionName name,CallbackParams param){
+void SQLFunction::calc(Value &value,FunctionName name,FunctionParams param){
     switch (name)
     {
     case FunctionName::LENGTH:{

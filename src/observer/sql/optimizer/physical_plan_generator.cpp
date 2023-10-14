@@ -193,12 +193,9 @@ RC PhysicalPlanGenerator::create_plan(ProjectLogicalOperator &project_oper, uniq
       return rc;
     }
   }
+  const std::vector<std::unique_ptr<Expression>> &exprs=  project_oper.selectExprs();
 
-  ProjectPhysicalOperator *project_operator = new ProjectPhysicalOperator;
-  const vector<Field> &project_fields = project_oper.fields();
-  for (const Field &field : project_fields) {
-    project_operator->add_projection(field.table(), field.meta());
-  }
+  ProjectPhysicalOperator *project_operator = new ProjectPhysicalOperator(exprs);
 
   if (child_phy_oper) {
     project_operator->add_child(std::move(child_phy_oper));

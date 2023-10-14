@@ -18,7 +18,6 @@ See the Mulan PSL v2 for more details.
 
 #include "attr/date.h"
 #include "sql/parser/value.h"
-#include "callback/callbackInfo.h"
 
 #include <string>
 
@@ -39,6 +38,24 @@ enum FunctionName{
     AGGREGATE_SUM
 };
 
+enum ParamType{
+    INT_PARAM,
+    FLOAT_PARAM,
+    BOOL_PARAM,
+    STR_PARAM,
+    UNDIFINED_PARAM
+};
+
+struct FunctionParams{
+  union {
+    int int_value_;
+    float float_value_;
+    bool bool_value_;
+  } num_info;                             ///< 数字附加内容
+  std::string str_info;                   ///< 文字附加内容
+  ParamType type=ParamType::UNDIFINED_PARAM;
+};
+
 enum SqlCalculateType{
     NULLSql,
     AGGREGATE
@@ -46,7 +63,7 @@ enum SqlCalculateType{
 
 class SQLFunction{
     public:
-        static void calc(Value &value,FunctionName name,CallbackParams param);
+        static void calc(Value &value,FunctionName name,FunctionParams param);
     private:
         static int length(const char* str);
         static float round(float num,int mark);

@@ -21,6 +21,8 @@ See the Mulan PSL v2 for more details. */
 #include "storage/field/field.h"
 #include "sql/parser/value.h"
 #include "common/log/log.h"
+#include "function/function.h"
+#include "function/aggr_function.h"
 
 class Tuple;
 
@@ -106,9 +108,21 @@ class FieldExpr : public Expression
 {
 public:
   FieldExpr() = default;
-  FieldExpr(const Table *table, const FieldMeta *field) : field_(table, field)
+  FieldExpr(const Table *table, const FieldMeta *field) 
+  : field_(table, field),funcName_(FunctionName::NULLFUNC)
   {}
-  FieldExpr(const Field &field) : field_(field)
+  FieldExpr(const Field &field) : field_(field),funcName_(FunctionName::NULLFUNC)
+  {}
+  FieldExpr(const Field &field, FunctionName funcName) : field_(field),funcName_(funcName)
+  {}
+  FieldExpr(const Field &field, FunctionName funcName,FunctionParams param) 
+  : field_(field),funcName_(funcName),param_(param)
+  {}
+  FieldExpr(const Field &field, FunctionName funcName,FunctionParams param, std::unique_ptr<AggregateFunction> &aggr) 
+  : field_(field),funcName_(funcName),param_(param),aggr_(std::move(aggr))
+  {}
+  FieldExpr(const Table *table, const FieldMeta *field, FunctionName funcName,FunctionParams param)
+  :field_(table, field),funcName_(funcName),param_(param)
   {}
 
   virtual ~FieldExpr() = default;
@@ -124,10 +138,17 @@ public:
 
   const char *field_name() const { return field_.field_name(); }
 
+  FunctionName funcName() const { return funcName_; }
+
+  FunctionParams& param() { return param_; }
+
   RC get_value(const Tuple &tuple, Value &value) const override;
 
 private:
   Field field_;
+  FunctionName funcName_;
+  FunctionParams param_;
+  std::unique_ptr<AggregateFunction> aggr_=nullptr;
 };
 
 /**

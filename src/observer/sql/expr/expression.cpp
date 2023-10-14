@@ -19,7 +19,18 @@ using namespace std;
 
 RC FieldExpr::get_value(const Tuple &tuple, Value &value) const
 {
-  return tuple.find_cell(TupleCellSpec(table_name(), field_name()), value);
+  RC rc=tuple.find_cell(TupleCellSpec(table_name(), field_name()), value);
+  if(rc!=RC::SUCCESS || funcName_==NULLFUNC){
+    return rc;
+  }
+  SQLFunction::calc(value,funcName_,param_);
+  // 计算回调内容
+  if(this->aggr_!=nullptr){
+    this->aggr_->calc(value);
+    this->aggr_->set(value);
+  }
+  return rc;
+
 }
 
 RC ValueExpr::get_value(const Tuple &tuple, Value &value) const

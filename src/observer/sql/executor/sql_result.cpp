@@ -59,11 +59,6 @@ RC SqlResult::close()
       }
     }
   }
-
-  if(this->callbackSet!=nullptr){
-    delete this->callbackSet;
-    this->callbackSet=nullptr;
-  }
   
   return rc;
 }
@@ -76,7 +71,6 @@ RC SqlResult::next_tuple(Tuple *&tuple)
   }
 
   tuple = operator_->current_tuple();
-  tuple->setCallbackSet(this->callbackSet);
   return rc;
 }
 

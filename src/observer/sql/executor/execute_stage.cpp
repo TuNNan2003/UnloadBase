@@ -27,6 +27,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/default/default_handler.h"
 #include "sql/executor/command_executor.h"
 #include "sql/operator/calc_physical_operator.h"
+#include "algorithm/algorithm.h"
 
 using namespace std;
 using namespace common;
@@ -64,16 +65,23 @@ RC ExecuteStage::handle_request_with_physical_operator(SQLStageEvent *sql_event)
 
   // TODO 这里也可以优化一下，是否可以让physical operator自己设置tuple schema
   TupleSchema schema;
+  std::vector<std::string> exprRawText;
+  bool aggrFlag=false;
   switch (stmt->type()) {
     case StmtType::SELECT: {
       SelectStmt *select_stmt = static_cast<SelectStmt *>(stmt);
-      bool with_table_name = select_stmt->tables().size() > 1;
-
-      for (const Field &field : select_stmt->query_fields()) {
-        if (with_table_name) {
-          schema.append_cell(field.table_name(), field.field_name());
-        } else {
-          schema.append_cell(field.field_name());
+      aggrFlag=select_stmt->isAggr();
+      // 此处忽略在select关键字和表达式之间的其他内容，默认select之后就是表达式
+      exprRawText=Algorithm::splitAttr(sql_event->sql(),1);
+      LOG_DEBUG("size is %d",exprRawText.size());
+      // 特殊处理通配符
+      if(exprRawText.size()==1&&exprRawText[0]=="*"){
+        exprRawText.clear();
+        const std::vector<Table*>&tables=select_stmt->tables();
+        for(Table* table:tables){
+          for(FieldMeta field:*table->table_meta().field_metas()){
+            exprRawText.push_back(field.name());
+          }
         }
       }
     } break;
@@ -95,6 +103,8 @@ RC ExecuteStage::handle_request_with_physical_operator(SQLStageEvent *sql_event)
 
   SqlResult *sql_result = sql_event->session_event()->sql_result();
   sql_result->set_tuple_schema(schema);
+  sql_result->set_exprRawText(exprRawText);
   sql_result->set_operator(std::move(physical_operator));
+  sql_result->setIsAggr(aggrFlag);
   return rc;
 }

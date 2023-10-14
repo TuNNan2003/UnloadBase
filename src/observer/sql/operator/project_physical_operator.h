@@ -23,7 +23,8 @@ See the Mulan PSL v2 for more details. */
 class ProjectPhysicalOperator : public PhysicalOperator
 {
 public:
-  ProjectPhysicalOperator()
+  ProjectPhysicalOperator(const std::vector<std::unique_ptr<Expression>> &exprs)
+  :selectExprs_(exprs),tuple_(selectExprs_)
   {}
 
   virtual ~ProjectPhysicalOperator() = default;
@@ -51,5 +52,6 @@ public:
   Tuple *current_tuple() override;
 
 private:
+  const std::vector<std::unique_ptr<Expression>> &selectExprs_;
   ProjectTuple tuple_;
 };
