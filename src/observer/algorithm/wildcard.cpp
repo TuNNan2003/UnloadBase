@@ -16,7 +16,7 @@ See the Mulan PSL v2 for more details.
 
 #include "algorithm.h"
 
-#define ANYCHAR '?'
+#define ANYCHAR '_'
 #define ANYSTR '%'
 #define MATCHBYKMP
 

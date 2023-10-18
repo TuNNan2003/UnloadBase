@@ -44,7 +44,7 @@ RC UpdatePhysicalOperator::next()
         if(!index_find){
             index = row_tuple->locate_index(attribute_);
             if(index == -1){
-                LOG_ERROR("Error attribute name %s", attribute_.c_str());
+                LOG_DEBUG("Error attribute name %s", attribute_.c_str());
                 return RC::NOTFOUND;
             }
             index_find = true;
