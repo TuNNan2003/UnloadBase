@@ -782,7 +782,16 @@ condition:
     }
     ;
 join_tables:
-    ID INNER JOIN ID on
+    join_tables INNER JOIN ID on{
+      $$ = $1;
+      if($5!=nullptr){
+        $$->selection.conditions.insert($$->selection.conditions.begin(),$5->begin(),$5->end());
+        delete $5;
+      }
+      $$->selection.relations.push_back($4);
+      free($4);
+    }
+    | ID INNER JOIN ID on
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if($5!=nullptr){
@@ -793,16 +802,6 @@ join_tables:
       $$->selection.relations.push_back($4);
       free($1);
       free($4);
-    }
-    | LBRACE join_tables RBRACE INNER JOIN ID on
-    {
-      $$ = $2;
-      if($7!=nullptr){
-        $$->selection.conditions.insert($$->selection.conditions.begin(),$7->begin(),$7->end());
-        delete $7;
-      }
-      $$->selection.relations.push_back($6);
-      free($6);
     }
     | LBRACE join_tables RBRACE
     {
