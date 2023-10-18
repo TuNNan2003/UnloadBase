@@ -47,20 +47,12 @@ RC UpdatePhysicalOperator::next()
         }
 
         RowTuple *row_tuple = static_cast<RowTuple *>(tuple);
-<<<<<<< HEAD
-        if(!index_find){
-            index = row_tuple->locate_index(attribute_);
-            if(index == -1){
-                LOG_DEBUG("Error attribute name %s", attribute_.c_str());
-                return RC::NOTFOUND;
-=======
         if (!index_find)
         {
             rc = convert(&value, &index, row_tuple);
             if (rc != RC::SUCCESS)
             {
                 return rc;
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
             }
             index_find = true;
         }

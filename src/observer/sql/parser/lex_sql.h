@@ -396,9 +396,6 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-<<<<<<< HEAD
-#line 154 "lex_sql.l"
-=======
 #ifndef yy_create_buffer_ALREADY_DEFINED
 #undef yy_create_buffer
 #endif
@@ -544,8 +541,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 153 "lex_sql.l"
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+#line 154 "lex_sql.l"
 
 
 #line 548 "lex_sql.h"

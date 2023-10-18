@@ -148,11 +148,7 @@ union YYSTYPE
   int                               number;
   float                             floats;
 
-<<<<<<< HEAD
-#line 150 "yacc_sql.hpp"
-=======
-#line 151 "yacc_sql.hpp"
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+#line 152 "yacc_sql.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

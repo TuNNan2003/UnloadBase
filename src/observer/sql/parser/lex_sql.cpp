@@ -385,14 +385,8 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-<<<<<<< HEAD
-
 #define YY_NUM_RULES 72
 #define YY_END_OF_BUFFER 73
-=======
-#define YY_NUM_RULES 71
-#define YY_END_OF_BUFFER 72
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -400,11 +394,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-<<<<<<< HEAD
-static yyconst flex_int16_t yy_accept[240] =
-=======
-static const flex_int16_t yy_accept[237] =
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+static const flex_int16_t yy_accept[240] =
     {   0,
         0,    0,    0,    0,   73,   71,    1,    2,   71,   71,
        71,   54,   55,   66,   64,   56,   65,    6,   67,    3,
@@ -478,11 +468,7 @@ static const YY_CHAR yy_meta[74] =
         2,    2,    2
     } ;
 
-<<<<<<< HEAD
-static yyconst flex_int16_t yy_base[245] =
-=======
-static const flex_int16_t yy_base[242] =
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+static const flex_int16_t yy_base[245] =
     {   0,
         0,    0,    0,    0,  155, 1841, 1841, 1841,  128,   69,
        74, 1841, 1841, 1841, 1841, 1841,   60, 1841, 1841,   81,
@@ -513,11 +499,7 @@ static const flex_int16_t yy_base[242] =
      1836, 1838,   93,   81
     } ;
 
-<<<<<<< HEAD
-static yyconst flex_int16_t yy_def[245] =
-=======
-static const flex_int16_t yy_def[242] =
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+static const flex_int16_t yy_def[245] =
     {   0,
       239,    1,  240,  240,  239,  239,  239,  239,  239,  241,
       242,  239,  239,  239,  239,  239,  239,  239,  239,  239,
@@ -548,11 +530,7 @@ static const flex_int16_t yy_def[242] =
       239,  239,  239,  239
     } ;
 
-<<<<<<< HEAD
-static yyconst flex_int16_t yy_nxt[1915] =
-=======
-static const flex_int16_t yy_nxt[1883] =
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+static const flex_int16_t yy_nxt[1915] =
     {   0,
         6,    7,    8,    9,   10,   11,   12,   13,   14,   15,
        16,   17,   18,   19,   20,   20,   20,   20,   20,   21,
@@ -767,11 +745,7 @@ static const flex_int16_t yy_nxt[1883] =
       239,  239,  239,  239
     } ;
 
-<<<<<<< HEAD
-static yyconst flex_int16_t yy_chk[1915] =
-=======
-static const flex_int16_t yy_chk[1883] =
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+static const flex_int16_t yy_chk[1915] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -1018,7 +992,7 @@ extern int atoi();
 extern double atof();
 
 #define RETURN_TOKEN(token) LOG_DEBUG("%s", #token);return token
-#line 988 "lex_sql.cpp"
+#line 996 "lex_sql.cpp"
 /* Prevent the need for linking with -lfl */
 #define YY_NO_INPUT 1
 /* 不区分大小写 */
@@ -1027,11 +1001,7 @@ extern double atof();
 /* 1. 匹配的规则长的优先 */
 /* 2. 写在最前面的优先 */
 /* yylval 就可以认为是 yacc 中 %union 定义的结构体(union 结构) */
-<<<<<<< HEAD
-#line 995 "lex_sql.cpp"
-=======
-#line 997 "lex_sql.cpp"
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+#line 1005 "lex_sql.cpp"
 
 #define INITIAL 0
 #define STR 1
@@ -1283,14 +1253,6 @@ YY_DECL
 	int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-<<<<<<< HEAD
-#line 75 "lex_sql.l"
-
-
-#line 1238 "lex_sql.cpp"
-
-=======
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
     yylval = yylval_param;
 
     yylloc = yylloc_param;
@@ -1325,7 +1287,7 @@ YY_DECL
 #line 75 "lex_sql.l"
 
 
-#line 1283 "lex_sql.cpp"
+#line 1291 "lex_sql.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1352,13 +1314,8 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-<<<<<<< HEAD
 				if ( yy_current_state >= 240 )
-					yy_c = yy_meta[(unsigned int) yy_c];
-=======
-				if ( yy_current_state >= 237 )
 					yy_c = yy_meta[yy_c];
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
@@ -1741,11 +1698,7 @@ YY_RULE_SETUP
 #line 154 "lex_sql.l"
 ECHO;
 	YY_BREAK
-<<<<<<< HEAD
-#line 1679 "lex_sql.cpp"
-=======
-#line 1689 "lex_sql.cpp"
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+#line 1702 "lex_sql.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STR):
 	yyterminate();
@@ -2045,13 +1998,8 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-<<<<<<< HEAD
 			if ( yy_current_state >= 240 )
-				yy_c = yy_meta[(unsigned int) yy_c];
-=======
-			if ( yy_current_state >= 237 )
 				yy_c = yy_meta[yy_c];
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 		}
@@ -2079,19 +2027,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-<<<<<<< HEAD
 		if ( yy_current_state >= 240 )
-			yy_c = yy_meta[(unsigned int) yy_c];
-		}
-	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 239);
-=======
-		if ( yy_current_state >= 237 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 236);
->>>>>>> 71389b5 (<feat>add support for update with many attributes)
+	yy_is_jam = (yy_current_state == 239);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
