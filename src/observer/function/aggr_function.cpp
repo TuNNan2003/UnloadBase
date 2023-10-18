@@ -53,7 +53,6 @@ void MaxAggregateFunction::calc(Value value){
 }
 
 void MinAggregateFunction::calc(Value value){
-    std::cout<<"get such val:"<<value.to_string()<<" ";
     if(begin_flag){
         std::swap(res, value);
         begin_flag = false;
@@ -62,7 +61,6 @@ void MinAggregateFunction::calc(Value value){
             std::swap(res, value);
         }
     }
-    std::cout<<"get such res:"<<res.to_string()<<std::endl;
 }
 
 void SumAggregateFunction::calc(Value value){
