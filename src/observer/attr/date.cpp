@@ -51,7 +51,7 @@ std::shared_ptr<Date> Date::parseDate(const char *date_)
     char *ptr = (char *)date_;
     std::vector<std::string> dateParts=Algorithm::splitStr(std::string(date_),'-');
     if(dateParts.size()!=3){
-        LOG_ERROR("date format is incorrect or date is illegal");
+        LOG_DEBUG("date format is incorrect or date is illegal");
         return std::make_shared<Date>();
     }
     int year = std::stoi(dateParts[0]);
@@ -59,7 +59,7 @@ std::shared_ptr<Date> Date::parseDate(const char *date_)
     int day = std::stoi(dateParts[2]);
     
     if(!validDate(year,month,day)){
-        LOG_ERROR("date format is incorrect or date is illegal");
+        LOG_DEBUG("date format is incorrect or date is illegal");
         return std::make_shared<Date>();
     }
     LOG_DEBUG("success get year:%d,month:%d,day:%d",year,month,day);

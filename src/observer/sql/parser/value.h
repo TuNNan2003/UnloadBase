@@ -113,5 +113,5 @@ private:
     bool bool_value_;
   } num_value_;
   std::string str_value_;
-  std::shared_ptr<Date> date_value_;
+  std::shared_ptr<Date> date_value_=nullptr;
 };

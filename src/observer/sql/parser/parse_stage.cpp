@@ -36,7 +36,13 @@ RC ParseStage::handle_request(SQLStageEvent *sql_event)
 
   ParsedSqlResult parsed_sql_result;
 
-  parse(sql.c_str(), &parsed_sql_result);
+  if(parse(sql.c_str(), &parsed_sql_result)!=RC::SUCCESS){
+    LOG_DEBUG("abort by parser, check format of the input");
+    rc=RC::SQL_SYNTAX;
+    sql_result->set_return_code(rc);
+    return rc;
+  }
+
   if (parsed_sql_result.sql_nodes().empty()) {
     sql_result->set_return_code(RC::SUCCESS);
     sql_result->set_state_string("");

@@ -414,6 +414,9 @@ value:
       char *tmp = common::substr($1,1,strlen($1)-2);
       $$ = new Value(tmp,true);
       free(tmp);
+      if($$->get_date()==nullptr||$$->get_date()->isNull()){
+        return ATTR_VAL_ERROR;
+      }
     }
     |SSS {
       char *tmp = common::substr($1,1,strlen($1)-2);

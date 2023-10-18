@@ -23,6 +23,8 @@ See the Mulan PSL v2 for more details. */
 
 #include "function/function.h"
 
+#define ATTR_VAL_ERROR 5
+
 class Expression;
 
 /**

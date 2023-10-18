@@ -44,6 +44,9 @@ int sql_parse(const char *st, ParsedSqlResult *sql_result);
 
 RC parse(const char *st, ParsedSqlResult *sql_result)
 {
-  sql_parse(st, sql_result);
+  // 处理前端解析时就发现的字段值错误情况
+  if(sql_parse(st, sql_result)==ATTR_VAL_ERROR){
+    return RC::SQL_SYNTAX;
+  }
   return RC::SUCCESS;
 }
