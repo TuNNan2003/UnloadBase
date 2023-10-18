@@ -24,6 +24,7 @@ See the Mulan PSL v2 for more details.
 #define VARFILESEP '_'
 #define VARFILEEND ".data"
 #define VARTYPELEN -1
+#define VARMAXLEN 65535
 
 /*
 *   VarRecordFileHandler本质上是变长数据在内存中存储的代理

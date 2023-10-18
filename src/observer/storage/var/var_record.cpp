@@ -76,6 +76,9 @@ RC VarRecordFileHandler::transVarAddress(char* file_addr, char* &memory_addr){
 }
 
 RC VarRecordFileHandler::insert(unsigned long long &address,const char* insert_data,int length){
+    if(length>VARMAXLEN){
+        return RC::IOERR_TOO_LONG;
+    }
     if(this->fullName.empty()){
         return RC::EMPTY;
     }

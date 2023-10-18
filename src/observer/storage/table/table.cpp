@@ -381,7 +381,7 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
       
       // 取出open table过程中加载的代理，可以避免在不存在的字段插入
       if(this->var_handlers_.find(field->name())==this->var_handlers_.end()){
-        LOG_ERROR("no var file for this field, name is %s",field->name());
+        LOG_DEBUG("no var file for this field, name is %s",field->name());
         return RC::EMPTY;
       }
       VarRecordFileHandler* handler=&var_handlers_.at(field->name());
@@ -389,14 +389,20 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
 
       // 插入数据到变长数据文件中
       RC rc=handler->insert(address,value.data(),copy_len);
-      if(rc==RC::EMPTY){
-        LOG_ERROR("handler init error, empty file name");
+      if(rc!=RC::SUCCESS){
+        if(rc==RC::EMPTY){
+          LOG_DEBUG("handler init error, empty file name");
+        }
+        else if(rc==RC::FILE_NOT_OPENED){
+          LOG_DEBUG("file not opened, full name is %s", handler->getFullName());
+        }else if(rc==RC::IOERR_TOO_LONG){
+          LOG_DEBUG("var data too long to save");
+        }else{
+          LOG_DEBUG("unhandled insert error");
+        }
         return rc;
       }
-      else if(rc==RC::FILE_NOT_OPENED){
-        LOG_ERROR("file not opened, full name is %s", handler->getFullName());
-        return rc;
-      }
+
       varLenPointer pointer=varLenAttr::makeVarLenPointer(copy_len,address);
       memcpy(record_data + field->offset(), &pointer, varLenAttr::getByteNumULL());
 
