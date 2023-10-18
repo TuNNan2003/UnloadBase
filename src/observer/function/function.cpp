@@ -13,10 +13,13 @@ See the Mulan PSL v2 for more details.
 /*
 *   Created by wuhuua on 2023/9/9
 */
-
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <vector>
+#include <cstdio>
 
 #include "function.h"
-#include <cstdio>
 
 void SQLFunction::calc(Value &value,FunctionName name,FunctionParams param){
     switch (name)
@@ -31,7 +34,8 @@ void SQLFunction::calc(Value &value,FunctionName name,FunctionParams param){
     }break;
     case FunctionName::DATE_FORMAT:{
         if(param.type==ParamType::STR_PARAM){
-            value.set_string(date_format(value.get_date(),param.str_info));
+            std::string str=date_format(value.get_date(),param.str_info);
+            value.set_string(str.c_str(),str.length());
         }
     }break;
     default:
@@ -60,75 +64,45 @@ float SQLFunction::round(float num, int mark){
     return res;
 }
 
-const char* SQLFunction::date_format(std::shared_ptr<Date> date,std::string fmt){
-    const char* fmtDate=date_format(date->getYear(),date->getMonth(),date->getDay(),fmt.c_str());
-    return fmtDate;
+std::string SQLFunction::date_format(std::shared_ptr<Date> date,std::string fmt){
+    std::string str=date_format(date->getYear(),date->getMonth(),date->getDay(),fmt.c_str());
+    return str;
 }
 
-const char* SQLFunction::date_format(int year,int month,int day,const char* fmt){
-    int len=length(fmt)+1;
-    char* fmtDate=new char[len+6];
-    char* ptr=fmtDate;
+std::string SQLFunction::date_format(int year,int month,int day,const char* fmt){
+    std::stringstream ss;
     int numCount=0;
-    int nums[3];
     while(*fmt!='\0'){
-        *ptr=*fmt;
-        ptr++;
         if(*fmt=='%'){
             fmt++;
+            if(*fmt=='\0'){break;}
             switch (toBiggerCase(*fmt))
             {
             case DATE_FORMAT_YEAR:{
-                nums[numCount]=year;
-                *ptr='0';
-                ptr++;
-                *ptr='4';
-                ptr++;
-                *ptr='d';
-                ptr++;
-                numCount++;
+                ss<<year;
             }break;
             case DATE_FORMAT_MONTH:{
-                nums[numCount]=month;
-                *ptr='0';
-                ptr++;
-                *ptr='2';
-                ptr++;
-                *ptr='d';
-                ptr++;
-                numCount++;
+                if (month < 10) {
+                    ss << '0'; 
+                }
+                ss << month;
             }break;
             case DATE_FORMAT_DAY:{
-                nums[numCount]=day;
-                *ptr='0';
-                ptr++;
-                *ptr='2';
-                ptr++;
-                *ptr='d';
-                ptr++;
-                numCount++;
+                if (day < 10){
+                    ss << '0';
+                }
+                ss << day;
             }break;
             default:
-                break;
+                ss << '%';
+                ss << *fmt;
             }
+        }else{
+            ss << *fmt;
         }
         fmt++;
     }
-    switch (numCount)
-    {
-        case 1:{
-            sprintf(fmtDate,fmtDate,nums[0]);
-        }break;
-        case 2:{
-            sprintf(fmtDate,fmtDate,nums[0],nums[1]);
-        }break;
-        case 3:{
-            sprintf(fmtDate,fmtDate,nums[0],nums[1],nums[2]);
-        }break;
-        default:{          
-        }break;
-    }
-    return fmtDate;
+    return ss.str();
 }
 
 char SQLFunction::toBiggerCase(char ch){
