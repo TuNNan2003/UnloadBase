@@ -127,6 +127,7 @@ COUNT                                   RETURN_TOKEN(COUNT);
 AVG                                     RETURN_TOKEN(AVG);
 SUM                                     RETURN_TOKEN(SUM);
 LIKE                                    RETURN_TOKEN(LIKE);
+NOT                                     RETURN_TOKEN(NOT);
 {ID}                                    yylval->string=strdup(yytext); RETURN_TOKEN(ID);
 "("                                     RETURN_TOKEN(LBRACE);
 ")"                                     RETURN_TOKEN(RBRACE);
