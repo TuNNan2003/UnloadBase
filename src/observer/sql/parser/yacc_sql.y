@@ -542,17 +542,7 @@ expression:
     ;
 
 select_attr:
-    '*' {
-      $$ = new std::vector<ExpressionSqlNode*>;
-      ExpressionSqlNode* expr=new ExpressionSqlNode;
-      RelAttrSqlNode attr;
-      attr.relation_name  = "";
-      attr.attribute_name = "*";
-      expr->attr=attr;
-      expr->type=EXPRTYPE::ATTR;
-      $$->emplace_back(expr);
-    }
-    | rel_attr attr_list {
+    rel_attr attr_list {
       if ($2 != nullptr) {
         $$ = $2;
       } else {
@@ -626,13 +616,6 @@ attr_meta:
       $$->function_name = FunctionName::AGGREGATE_MIN;
       $$->sql_type = SqlCalculateType::AGGREGATE;
     }
-    | COUNT LBRACE '*' RBRACE{
-      $$ = new RelAttrSqlNode;
-      $$->function_name = FunctionName::AGGREGATE_COUNT;
-      $$->sql_type = SqlCalculateType::AGGREGATE;
-      $$->relation_name="";
-      $$->attribute_name="*";
-    }
     | COUNT LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_COUNT;
@@ -664,7 +647,12 @@ attr_meta:
     ;
 
 id_meta:
-    ID {
+    '*'{
+      $$ = new RelAttrSqlNode;
+      $$->relation_name  = "";
+      $$->attribute_name = "*";
+    }
+    | ID {
       $$ = new RelAttrSqlNode;
       $$->attribute_name = $1;
       free($1);

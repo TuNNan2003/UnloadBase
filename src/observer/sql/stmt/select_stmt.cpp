@@ -58,10 +58,12 @@ static RC dealWithWildcard(
     }
     query_exprs.push_back(std::make_unique<FieldExpr>(
       Field(default_table,field_meta),relation_attr.function_name,relation_attr.param,aggr));
-  }else{
+  }else if(relation_attr.function_name==FunctionName::NULLFUNC){
     for (Table *table : tables) {
       wildcard_fields(table, query_exprs);
     }
+  }else{
+    return RC::INVALID_ARGUMENT;
   }
   return RC::SUCCESS;
 }
@@ -83,8 +85,10 @@ static RC dealWithWildcard(
     }
     query_exprs.push_back(std::make_unique<FieldExpr>(
       Field(default_table,field_meta),relation_attr.function_name,relation_attr.param,aggr));
+  }else if(relation_attr.function_name==FunctionName::NULLFUNC){
+    wildcard_fields(default_table, query_exprs);
   }else{
-      wildcard_fields(default_table, query_exprs);
+    return RC::INVALID_ARGUMENT;
   }
   return RC::SUCCESS;
 }
@@ -160,9 +164,14 @@ std::unique_ptr<Expression> makeArthExpr(
       const FieldMeta *field_meta;
       // 对于count(*)这种情况，选择任意一个字段填入即可
       if (common::is_blank(relation_attr.relation_name.c_str()) &&
-        0 == strcmp(relation_attr.attribute_name.c_str(), "*") && 
-        relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
-        field_meta = default_table->table_meta().field(0);
+        0 == strcmp(relation_attr.attribute_name.c_str(), "*")){
+        if(relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
+          field_meta = default_table->table_meta().field(0);
+        }else{
+          rc=RC::INVALID_ARGUMENT;
+          free(expr_attr);
+          return std::make_unique<ValueExpr>(Value(0));
+        }
       }else{
         field_meta = default_table->table_meta().field(relation_attr.attribute_name.c_str());
       }
