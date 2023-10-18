@@ -13,75 +13,64 @@ See the Mulan PSL v2 for more details.
 /*
 *   Created by wuhuua on 2023/8/28
 */
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <vector>
 
 #include "date.h"
-
 #include "common/log/log.h"
+#include "algorithm/algorithm.h"
+
+
+void formatDate(int year, int month, int day, char* formattedDate) {
+    std::stringstream ss;
+    // Format year
+    ss << year;
+    std::string yearString = ss.str();
+    ss.str(""); 
+    // Format month
+    if (month < 10) {
+        ss << '0'; 
+    }
+    ss << month;
+    std::string monthString = ss.str();
+    ss.str(""); 
+    // Format day
+    if (day < 10) {
+        ss << '0'; 
+    }
+    ss << day;
+    std::string dayString = ss.str();
+    strcpy(formattedDate, (yearString + "-" + monthString + "-" + dayString).c_str());
+}
 
 
 std::shared_ptr<Date> Date::parseDate(const char *date_)
 {
     char *ptr = (char *)date_;
-    int year=0;
-    int month=0;
-    int day=0;
-    bool nullFlag_=false;
-    if (!parseDate(ptr, year, 4, "year format error"))
-    {
-        nullFlag_=true;
+    std::vector<std::string> dateParts=Algorithm::splitStr(std::string(date_),'-');
+    if(dateParts.size()!=3){
+        LOG_ERROR("date format is incorrect or date is illegal");
+        return std::make_shared<Date>();
     }
-    if (!parseDate(ptr, month, 2, "month format error"))
-    {
-        nullFlag_=true;
-    }
-    if (!parseDate(ptr, day, 2, "day format error"))
-    {
-        nullFlag_=true;
-    }
-    if(nullFlag_||!validDate(year,month,day)){
+    int year = std::stoi(dateParts[0]);
+    int month = std::stoi(dateParts[1]);
+    int day = std::stoi(dateParts[2]);
+    
+    if(!validDate(year,month,day)){
         LOG_ERROR("date format is incorrect or date is illegal");
         return std::make_shared<Date>();
     }
     LOG_DEBUG("success get year:%d,month:%d,day:%d",year,month,day);
     char* str=new char[DATE_LENGTH];
-    memcpy(str,date_,DATE_LENGTH);
+    formatDate(year,month,day,str);
     return std::make_shared<Date>(str,year,month,day,false);
 }
 
 Date::Date(const char* date,int year,int month,int day,const bool nullFlag)
 :date(date),year(year),month(month),day(day),nullFlag(nullFlag){}
 
-bool Date::parseDate(char* &ptr, int &segment, int len, const char *errorInfo)
-{
-    int i = 0,multi=1;
-    while (*ptr == '-')
-    {
-        ptr++;
-    }
-
-    for(int j=0;j<len-1;j++){
-        multi*=10;
-    }
-    for (i = 0; i < len; i++)
-    {
-        if (*ptr == '\0' || *ptr == '-')
-        {
-            break;
-        }
-        else
-        {
-            segment+=(*ptr-'0')*multi;
-            multi/=10;
-        }
-        ptr++;
-    }
-    if (i != len)
-    {
-        LOG_ERROR("Date Parser error: %s", errorInfo);
-        return false;
-    }
-    return true;
-}
 
 bool Date::validDate(int year,int month,int day)
 {

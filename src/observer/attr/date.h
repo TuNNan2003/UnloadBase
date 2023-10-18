@@ -36,7 +36,6 @@ class Date{
         const int month;
         const int day;
         const bool nullFlag;
-        bool static parseDate(char* &ptr, int &segment,int len,const char* errorInfo);
     public:
         Date(const char* date,int year,int month,int day,const bool nullFlag);
         static std::shared_ptr<Date> parseDate(const char* date_);

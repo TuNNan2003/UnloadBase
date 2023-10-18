@@ -21,4 +21,5 @@ class Algorithm{
     public:
         static bool wildcardMatching(std::string text,std::string pattern);
         static std::vector<std::string> splitAttr(std::string sql,int part);
+        static std::vector<std::string> splitStr(const std::string& s, char delimiter);
 };
