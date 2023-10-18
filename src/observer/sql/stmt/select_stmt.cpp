@@ -36,6 +36,59 @@ static void wildcard_fields(Table *table, std::vector<std::unique_ptr<Expression
   }
 }
 
+// 多表通配符处理
+static RC dealWithWildcard(
+  RelAttrSqlNode &relation_attr,
+  std::vector<Table *> &tables,
+  std::vector<std::unique_ptr<Expression>> &query_exprs)
+{
+  // 对于count(*)要特殊处理，如果有多张表选择第一张表去查询行数
+  if(relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
+    std::unique_ptr<AggregateFunction> aggr = 
+    AggregateFunctionFactory::CreateAggregateFunction(relation_attr.function_name);
+    if(tables.size()==0){
+      LOG_DEBUG("no table to count lines with '*' ");
+      return RC::EMPTY;
+    }
+    Table* default_table=tables[0];
+    const FieldMeta* field_meta = default_table->table_meta().field(0);
+    if (nullptr == field_meta) {
+      LOG_WARN("no such field, in expr resolving field=%s.%s", default_table->name(), relation_attr.attribute_name.c_str());
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    query_exprs.push_back(std::make_unique<FieldExpr>(
+      Field(default_table,field_meta),relation_attr.function_name,relation_attr.param,aggr));
+  }else{
+    for (Table *table : tables) {
+      wildcard_fields(table, query_exprs);
+    }
+  }
+  return RC::SUCCESS;
+}
+
+// 单表通配符处理
+static RC dealWithWildcard(
+  RelAttrSqlNode &relation_attr,
+  Table* &default_table,
+  std::vector<std::unique_ptr<Expression>> &query_exprs)
+{
+  // 对于count(*)要特殊处理，如果有多张表选择第一张表去查询行数
+  if(relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
+    std::unique_ptr<AggregateFunction> aggr = 
+    AggregateFunctionFactory::CreateAggregateFunction(relation_attr.function_name);
+    const FieldMeta* field_meta = default_table->table_meta().field(0);
+    if (nullptr == field_meta) {
+      LOG_WARN("no such field, in expr resolving field=%s.%s", default_table->name(), relation_attr.attribute_name.c_str());
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    query_exprs.push_back(std::make_unique<FieldExpr>(
+      Field(default_table,field_meta),relation_attr.function_name,relation_attr.param,aggr));
+  }else{
+      wildcard_fields(default_table, query_exprs);
+  }
+  return RC::SUCCESS;
+}
+
 ArithmeticExpr::Type getArthType(CalcOp op){
   switch(op){
     case CalcOp::ADD:{
@@ -104,7 +157,15 @@ std::unique_ptr<Expression> makeArthExpr(
         free(expr_attr);
         return std::make_unique<ValueExpr>(Value(0));
       }
-      const FieldMeta *field_meta = default_table->table_meta().field(relation_attr.attribute_name.c_str());
+      const FieldMeta *field_meta;
+      // 对于count(*)这种情况，选择任意一个字段填入即可
+      if (common::is_blank(relation_attr.relation_name.c_str()) &&
+        0 == strcmp(relation_attr.attribute_name.c_str(), "*") && 
+        relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
+        field_meta = default_table->table_meta().field(0);
+      }else{
+        field_meta = default_table->table_meta().field(relation_attr.attribute_name.c_str());
+      }
       if (nullptr == field_meta) {
         LOG_WARN("no such field, in expr resolving field=%s.%s", default_table->name(), relation_attr.attribute_name.c_str());
         rc=RC::SCHEMA_FIELD_MISSING;
@@ -215,8 +276,10 @@ RC SelectStmt::create(Db *db, const SelectSqlNode &select_sql, Stmt *&stmt)
       }
       if (common::is_blank(relation_attr.relation_name.c_str()) &&
           0 == strcmp(relation_attr.attribute_name.c_str(), "*")) {
-        for (Table *table : tables) {
-          wildcard_fields(table, query_exprs);
+        RC rc=dealWithWildcard(relation_attr,tables,query_exprs);
+        if(rc!=RC::SUCCESS){
+          free(expr_attr);
+          return rc;
         }
       } else if (!common::is_blank(relation_attr.relation_name.c_str())) {
         const char *table_name = relation_attr.relation_name.c_str();
@@ -228,8 +291,10 @@ RC SelectStmt::create(Db *db, const SelectSqlNode &select_sql, Stmt *&stmt)
             free(expr_attr);
             return RC::SCHEMA_FIELD_MISSING;
           }
-          for (Table *table : tables) {
-            wildcard_fields(table, query_exprs);
+          RC rc=dealWithWildcard(relation_attr,tables,query_exprs);
+          if(rc!=RC::SUCCESS){
+            free(expr_attr);
+            return rc;
           }
         } else {
           auto iter = table_map.find(table_name);
@@ -241,7 +306,11 @@ RC SelectStmt::create(Db *db, const SelectSqlNode &select_sql, Stmt *&stmt)
 
           Table *table = iter->second;
           if (0 == strcmp(field_name, "*")) {
-            wildcard_fields(table, query_exprs);
+            RC rc=dealWithWildcard(relation_attr,table,query_exprs);
+            if(rc!=RC::SUCCESS){
+              free(expr_attr);
+              return rc;
+            }
           } else {
             const FieldMeta *field_meta = table->table_meta().field(field_name);
             if (nullptr == field_meta) {

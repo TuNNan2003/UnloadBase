@@ -626,6 +626,13 @@ attr_meta:
       $$->function_name = FunctionName::AGGREGATE_MIN;
       $$->sql_type = SqlCalculateType::AGGREGATE;
     }
+    | COUNT LBRACE '*' RBRACE{
+      $$ = new RelAttrSqlNode;
+      $$->function_name = FunctionName::AGGREGATE_COUNT;
+      $$->sql_type = SqlCalculateType::AGGREGATE;
+      $$->relation_name="";
+      $$->attribute_name="*";
+    }
     | COUNT LBRACE id_meta RBRACE{
       $$ = $3;
       $$->function_name = FunctionName::AGGREGATE_COUNT;

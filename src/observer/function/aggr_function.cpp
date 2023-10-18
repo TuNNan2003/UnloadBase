@@ -16,6 +16,8 @@ See the Mulan PSL v2 for more details.
 
 #include "aggr_function.h"
 
+#include <iostream>
+
  std::unique_ptr<AggregateFunction> AggregateFunctionFactory::CreateAggregateFunction(FunctionName func){
     switch (func){
         case FunctionName::AGGREGATE_AVG : {
@@ -51,6 +53,7 @@ void MaxAggregateFunction::calc(Value value){
 }
 
 void MinAggregateFunction::calc(Value value){
+    std::cout<<"get such val:"<<value.to_string()<<" ";
     if(begin_flag){
         std::swap(res, value);
         begin_flag = false;
@@ -59,6 +62,7 @@ void MinAggregateFunction::calc(Value value){
             std::swap(res, value);
         }
     }
+    std::cout<<"get such res:"<<res.to_string()<<std::endl;
 }
 
 void SumAggregateFunction::calc(Value value){

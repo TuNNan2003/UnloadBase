@@ -39,14 +39,14 @@ class MaxAggregateFunction : public AggregateFunction{
 public:
     MaxAggregateFunction() : AggregateFunction() {}
     void calc(Value value); 
-    void set(Value& _res){this->res=_res; return;}
+    void set(Value& _res){_res=res; return;}
 };
 
 class MinAggregateFunction : public AggregateFunction{
 public:
     MinAggregateFunction() : AggregateFunction() {}
     void calc(Value value);
-    void set(Value& _res){this->res=_res; return;}
+    void set(Value& _res){_res=res; return;}
 };
 
 class AvgAggregateFunction : public AggregateFunction{
@@ -62,14 +62,14 @@ class SumAggregateFunction : public AggregateFunction{
 public:
     SumAggregateFunction() : AggregateFunction() {}
     void calc(Value value);
-    void set(Value& _res){this->res=_res; return;}
+    void set(Value& _res){_res=res; return;}
 };
 
 class CountAggregateFunction : public AggregateFunction{
 public:
     CountAggregateFunction() : AggregateFunction() {}
     void calc(Value value);
-    void set(Value& _res){this->res=_res; return;}
+    void set(Value& _res){_res=res; return;}
 };
 
 class AggregateFunctionFactory{
