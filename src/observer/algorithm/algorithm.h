@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details.
 *   Created by wuhuua on 2023/10/4
 */
 #pragma once
+#include <vector>
 #include <string>
 
 class Algorithm{

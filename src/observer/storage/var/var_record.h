@@ -19,6 +19,7 @@ See the Mulan PSL v2 for more details.
 #include "common/rc.h"
 #include <string>
 #include <vector>
+#include <limits>
 
 #define VARFILESEP '_'
 #define VARFILEEND ".data"
