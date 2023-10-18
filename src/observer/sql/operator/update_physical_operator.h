@@ -13,7 +13,7 @@ class UpdateStmt;
 class UpdatePhysicalOperator : public PhysicalOperator
 {
 public:
-    UpdatePhysicalOperator(Table *table, Value value, std::string attribute) : table_(table), value_(value), attribute_(attribute)
+    UpdatePhysicalOperator(Table *table, std::vector<SetVariableSqlNode> set_node) : table_(table), set_node_(set_node)
     {}
 
     virtual ~UpdatePhysicalOperator() = default;
@@ -26,6 +26,8 @@ public:
     RC open(Trx *trx) override;
     RC next() override;
     RC close() override;
+    RC convert(std::vector<Value>* value, std::vector<int>* index, RowTuple* row_tuple);
+    RC update(Table *table, RowTuple *row_tuple, std::vector<Value> value, std::vector<int> index);
 
     Tuple *current_tuple() override
     {
@@ -34,7 +36,6 @@ public:
 
 private:
     Table *table_ = nullptr;
-    Value value_;
-    std::string attribute_;
+    std::vector<SetVariableSqlNode> set_node_;
     Trx *trx_ = nullptr;
 };

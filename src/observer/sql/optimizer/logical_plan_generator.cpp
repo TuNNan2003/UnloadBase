@@ -217,7 +217,8 @@ RC LogicalPlanGenerator::create_plan(
         return rc;
       }
 
-      unique_ptr<LogicalOperator> update_oper(new UpdateLogicalOperator(table, update_stmt->values(), update_stmt->attribute()));
+      unique_ptr<LogicalOperator> update_oper(new UpdateLogicalOperator(table, update_stmt->setnode()));
+  
       if(predicate_oper){
         predicate_oper->add_child(std::move(table_get_oper));
         update_oper->add_child(std::move(predicate_oper));

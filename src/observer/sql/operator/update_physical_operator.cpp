@@ -7,13 +7,15 @@
 
 RC UpdatePhysicalOperator::open(Trx *trx)
 {
-    if(children_.empty()){
+    if (children_.empty())
+    {
         return RC::SUCCESS;
     }
 
     std::unique_ptr<PhysicalOperator> &child = children_[0];
     RC rc = child->open(trx);
-    if(rc != RC::SUCCESS){
+    if (rc != RC::SUCCESS)
+    {
         LOG_WARN("failed to open child operator: %s", strrc(rc));
         return rc;
     }
@@ -26,31 +28,45 @@ RC UpdatePhysicalOperator::open(Trx *trx)
 RC UpdatePhysicalOperator::next()
 {
     RC rc = RC::SUCCESS;
-    if(children_.empty()){
+    if (children_.empty())
+    {
         return RC::RECORD_EOF;
     }
-    
+
     PhysicalOperator *child = children_[0].get();
     bool index_find = false;
-    int index = -1;
-    while(RC::SUCCESS == (rc = child->next())){
+    std::vector<int> index;
+    std::vector<Value> value;
+    while (RC::SUCCESS == (rc = child->next()))
+    {
         Tuple *tuple = child->current_tuple();
-        if(nullptr == tuple){
+        if (nullptr == tuple)
+        {
             LOG_WARN("failed to get current recode %s", strrc(rc));
             return rc;
         }
 
         RowTuple *row_tuple = static_cast<RowTuple *>(tuple);
+<<<<<<< HEAD
         if(!index_find){
             index = row_tuple->locate_index(attribute_);
             if(index == -1){
                 LOG_DEBUG("Error attribute name %s", attribute_.c_str());
                 return RC::NOTFOUND;
+=======
+        if (!index_find)
+        {
+            rc = convert(&value, &index, row_tuple);
+            if (rc != RC::SUCCESS)
+            {
+                return rc;
+>>>>>>> 71389b5 (<feat>add support for update with many attributes)
             }
             index_find = true;
         }
-        rc = trx_->update_record(table_, row_tuple, value_, index);
-        if(rc != RC::SUCCESS){
+        rc = update(table_, row_tuple, value, index);
+        if (rc != RC::SUCCESS)
+        {
             LOG_WARN("failed to update record: %s", strrc(rc));
             return rc;
         }
@@ -59,9 +75,42 @@ RC UpdatePhysicalOperator::next()
     return RC::RECORD_EOF;
 }
 
-RC UpdatePhysicalOperator::close(){
-    if(!children_.empty()){
+RC UpdatePhysicalOperator::close()
+{
+    if (!children_.empty())
+    {
         children_[0]->close();
     }
     return RC::SUCCESS;
+}
+
+RC UpdatePhysicalOperator::convert(std::vector<Value> *value, std::vector<int> *index, RowTuple *row_tuple)
+{
+    for (int i = 0; i < set_node_.size(); i++)
+    {
+        value->emplace_back(set_node_[i].value);
+        int index_i = row_tuple->locate_index(set_node_[i].name);
+        if (index_i == -1)
+        {
+            LOG_ERROR("Error attribute name %s", set_node_[i].name);
+            return RC::NOTFOUND;
+        }
+        index->emplace_back(index_i);
+    }
+    return RC::SUCCESS;
+}
+
+RC UpdatePhysicalOperator::update(Table *table, RowTuple *row_tuple, std::vector<Value> value, std::vector<int> index)
+{
+    assert(value.size() == index.size());
+    for (int i = 0; i < value.size(); i++)
+    {
+        RC rc = trx_->update_record(table, row_tuple, value[i], index[i]);
+        if (rc != RC::SUCCESS)
+        {
+            LOG_WARN("failed to update record: %s", strrc(rc));
+            return rc;
+        }
+    }
+    return RC::SUCCESS; 
 }

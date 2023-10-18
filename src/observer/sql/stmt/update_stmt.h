@@ -28,7 +28,7 @@ class FilterStmt;
 class UpdateStmt : public Stmt 
 {
 public:
-  UpdateStmt(Table *table, Value values, std::string attribute, FilterStmt *filter_stmt);
+  UpdateStmt(Table *table, std::vector<SetVariableSqlNode> setnode, FilterStmt *filter_stmt);
   ~UpdateStmt() override;
 
 public:
@@ -36,13 +36,9 @@ public:
   {
     return table_;
   }
-  Value values() const
-  {
-    return values_;
-  }
 
-  std::string attribute() const{
-    return attribute_;
+  std::vector<SetVariableSqlNode> setnode() const{
+    return setnode_;
   }
 
   FilterStmt *filter_stmt() const{
@@ -58,7 +54,6 @@ public:
 
 private:
   Table *table_ = nullptr;
-  Value values_;
-  std::string attribute_;
+  std::vector<SetVariableSqlNode> setnode_;
   FilterStmt *filter_stmt_ = nullptr;
 };

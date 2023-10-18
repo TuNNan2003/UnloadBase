@@ -18,8 +18,8 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "storage/db/db.h"
 
-UpdateStmt::UpdateStmt(Table *table, Value values, std::string attribute, FilterStmt *filter_stmt)
-    : table_(table), values_(values), attribute_(attribute), filter_stmt_(filter_stmt)
+UpdateStmt::UpdateStmt(Table *table, std::vector<SetVariableSqlNode> setnode, FilterStmt *filter_stmt)
+    : table_(table), setnode_(setnode), filter_stmt_(filter_stmt)
 {}
 
 UpdateStmt::~UpdateStmt(){
@@ -53,6 +53,6 @@ RC UpdateStmt::create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt)
     return rc;
   }
 
-  stmt = new UpdateStmt(table, update_sql.value, update_sql.attribute_name, filter_stmt);
+  stmt = new UpdateStmt(table, update_sql.setnode, filter_stmt);
   return rc;
 }

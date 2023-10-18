@@ -9,7 +9,7 @@
 class UpdateLogicalOperator : public LogicalOperator
 {
 public:
-    UpdateLogicalOperator(Table* table, Value value, std::string attribute);
+    UpdateLogicalOperator(Table* table, std::vector<SetVariableSqlNode> set_node);
     virtual ~UpdateLogicalOperator() = default;
 
     LogicalOperatorType type() const override
@@ -17,12 +17,9 @@ public:
         return LogicalOperatorType::UPDATE;
     }
 
-    Table *table() const {return table_;}
-    Value value() const {return value_;}
-    std::string attribute() const {return attribute_;}
-
+    std::vector<SetVariableSqlNode> SetNode() const{return set_node_; }
+    Table* GetTable() const {return table_;}
 private:
     Table *table_ = nullptr;
-    std::string attribute_;
-    Value value_;
+    std::vector<SetVariableSqlNode> set_node_;
 };

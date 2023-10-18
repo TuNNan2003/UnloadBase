@@ -129,6 +129,7 @@ union YYSTYPE
 
   ParsedSqlNode *                   sql_node;
   ConditionSqlNode *                condition;
+  SetVariableSqlNode *              set_eq;
   Value *                           value;
   enum CompOp                       comp;
   ExpressionSqlNode *               rel_attr;
@@ -139,6 +140,7 @@ union YYSTYPE
   Expression *                      expression;
   std::vector<Expression *> *       expression_list;
   std::vector<Value> *              value_list;
+  std::vector<SetVariableSqlNode> * set_list;
   std::vector<ConditionSqlNode> *   condition_list;
   std::vector<ExpressionSqlNode*>*  rel_attr_list;
   std::vector<std::string> *        relation_list;
@@ -146,7 +148,11 @@ union YYSTYPE
   int                               number;
   float                             floats;
 
+<<<<<<< HEAD
 #line 150 "yacc_sql.hpp"
+=======
+#line 151 "yacc_sql.hpp"
+>>>>>>> 71389b5 (<feat>add support for update with many attributes)
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -118,6 +118,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %union {
   ParsedSqlNode *                   sql_node;
   ConditionSqlNode *                condition;
+  SetVariableSqlNode *              set_eq;
   Value *                           value;
   enum CompOp                       comp;
   ExpressionSqlNode *               rel_attr;
@@ -128,6 +129,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   Expression *                      expression;
   std::vector<Expression *> *       expression_list;
   std::vector<Value> *              value_list;
+  std::vector<SetVariableSqlNode> * set_list;
   std::vector<ConditionSqlNode> *   condition_list;
   std::vector<ExpressionSqlNode*>*  rel_attr_list;
   std::vector<std::string> *        relation_list;
@@ -146,6 +148,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 /** type 定义了各种解析后的结果输出的是什么类型。类型对应了 union 中的定义的成员变量名称 **/
 %type <number>              type
 %type <condition>           condition
+%type <set_eq>              set_eq
 %type <value>               value
 %type <number>              number
 %type <comp>                comp_op
@@ -156,9 +159,11 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <attr_info>           attr_def
 %type <value_list>          value_list
 %type <condition_list>      where
+%type <set_list>            set_variable_stmt
 %type <condition_list>      on
 %type <sql_node>            join_tables
 %type <condition_list>      condition_list
+%type <set_list>            set_list
 %type <rel_attr_list>       select_attr
 %type <relation_list>       rel_list
 %type <rel_attr_list>       attr_list
@@ -181,7 +186,6 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <sql_node>            rollback_stmt
 %type <sql_node>            load_data_stmt
 %type <sql_node>            explain_stmt
-%type <sql_node>            set_variable_stmt
 %type <sql_node>            help_stmt
 %type <sql_node>            exit_stmt
 %type <sql_node>            command_wrapper
@@ -218,7 +222,6 @@ command_wrapper:
   | rollback_stmt
   | load_data_stmt
   | explain_stmt
-  | set_variable_stmt
   | help_stmt
   | exit_stmt
     ;
@@ -439,18 +442,19 @@ delete_stmt:    /*  delete 语句的语法解析树*/
     }
     ;
 update_stmt:      /*  update 语句的语法解析树*/
-    UPDATE ID SET ID EQ value where 
+    UPDATE ID set_variable_stmt where 
     {
       $$ = new ParsedSqlNode(SCF_UPDATE);
       $$->update.relation_name = $2;
-      $$->update.attribute_name = $4;
-      $$->update.value = *$6;
-      if ($7 != nullptr) {
-        $$->update.conditions.swap(*$7);
-        delete $7;
+      if($3 != nullptr){
+        $$->update.setnode.swap(*$3);
+        delete $3;
+      }
+      if ($4 != nullptr) {
+        $$->update.conditions.swap(*$4);
+        delete $4;
       }
       free($2);
-      free($4);
     }
     ;
 select_stmt:        /*  select 语句的语法解析树*/
@@ -843,15 +847,39 @@ explain_stmt:
     ;
 
 set_variable_stmt:
-    SET ID EQ value
+    /* empty */
     {
-      $$ = new ParsedSqlNode(SCF_SET_VARIABLE);
-      $$->set_variable.name  = $2;
-      $$->set_variable.value = *$4;
-      free($2);
-      delete $4;
+      $$ = nullptr;
+    }
+    | SET set_list {
+      $$ = $2;
     }
     ;
+
+set_list:
+  /* empty */
+  {
+    $$ = nullptr;
+  }
+  | set_eq {
+    $$ = new std::vector<SetVariableSqlNode>;
+    $$->emplace_back(*$1);
+    delete $1;
+  }
+  | set_eq COMMA set_list{
+    $$ = $3;
+    $$->emplace_back(*$1);
+    delete $1; 
+  }
+
+set_eq:
+    ID EQ value {
+      $$ = new SetVariableSqlNode;
+      $$->name  = $1;
+      $$->value = *$3;
+      free($1);
+      delete $3;
+    }
 
 opt_semicolon: /*empty*/
     | SEMICOLON
