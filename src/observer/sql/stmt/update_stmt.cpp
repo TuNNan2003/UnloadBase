@@ -76,12 +76,16 @@ RC UpdateStmt::check(Table *table)
   std::vector<SetVariableSqlNode> setnode = this->setnode();
   for (int i = 0; i < setnode.size(); i++)
   {
+    int find = 0;
     for (int j = 0; j < attributes.size(); j++)
     {
-      if (strcmp(setnode[i].name.c_str(), attributes[j].c_str()) != 0)
+      if (strcmp(setnode[i].name.c_str(), attributes[j].c_str()) == 0)
       {
-        return RC::INTERNAL;
+        find = 1;
       }
+    }
+    if(find != 1){
+      return RC::INTERNAL;
     }
   }
   return RC::SUCCESS;
