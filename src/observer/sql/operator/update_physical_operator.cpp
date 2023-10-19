@@ -84,7 +84,7 @@ RC UpdatePhysicalOperator::convert(std::vector<Value> *value, std::vector<int> *
         int index_i = row_tuple->locate_index(set_node_[i].name);
         if (index_i == -1)
         {
-            LOG_ERROR("Error attribute name %s", set_node_[i].name);
+            LOG_DEBUG("Error attribute name %s", set_node_[i].name.c_str());
             return RC::NOTFOUND;
         }
         index->emplace_back(index_i);

@@ -103,6 +103,12 @@ public:
   bool get_boolean() const;
   void add(const Value &other);
 
+public:
+  /**
+   * 提供一些静态方法用于校验
+   */
+  static bool tryCompare(AttrType left,AttrType right);
+
 private:
   AttrType attr_type_ = UNDEFINED;
   int length_ = 0;

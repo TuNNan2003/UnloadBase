@@ -89,6 +89,8 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
   }
 
   filter_unit = new FilterUnit;
+  AttrType left;
+  AttrType right;
 
   if (condition.left_is_attr) {
     Table *table = nullptr;
@@ -100,10 +102,12 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
     }
     FilterObj filter_obj;
     filter_obj.init_attr(Field(table, field));
+    left=filter_obj.field.attr_type();
     filter_unit->set_left(filter_obj);
   } else {
     FilterObj filter_obj;
     filter_obj.init_value(condition.left_value);
+    left=filter_obj.value.attr_type();
     filter_unit->set_left(filter_obj);
   }
 
@@ -117,15 +121,21 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, std::unordered_m
     }
     FilterObj filter_obj;
     filter_obj.init_attr(Field(table, field));
+    right=filter_obj.field.attr_type();
     filter_unit->set_right(filter_obj);
   } else {
     FilterObj filter_obj;
     filter_obj.init_value(condition.right_value);
+    right=filter_obj.value.attr_type();
     filter_unit->set_right(filter_obj);
   }
 
   filter_unit->set_comp(comp);
 
   // 检查两个类型是否能够比较
+  if(!Value::tryCompare(left,right)){
+    rc=RC::VARIABLE_NOT_VALID;
+    LOG_DEBUG("unable to compare between %s and %s",attr_type_to_string(left),attr_type_to_string(right));
+  }
   return rc;
 }

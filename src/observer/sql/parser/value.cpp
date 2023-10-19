@@ -107,6 +107,9 @@ void Value::set_float(float val)
 void Value::set_date(const char *date){
   attr_type_ = DATES;
   date_value_=Date::parseDate(date);
+  if(date_value_->isNull()){
+    attr_type_=UNDEFINED;
+  }
   length_=DATE_SIZE;
 }
 void Value::set_boolean(bool val)
@@ -388,4 +391,16 @@ bool Value::get_boolean() const
     }
   }
   return false;
+}
+
+bool Value::tryCompare(AttrType left,AttrType right){
+  return (
+      (left == right)                       ||
+      (left == INTS   &&  right== FLOATS)   ||
+      (left ==FLOATS  &&  right==INTS)      ||
+      (left==CHARS    &&  right==INTS)      || 
+      (left==INTS     &&  right==CHARS)     ||
+      (left==CHARS    &&  right==FLOATS)    ||
+      (left==FLOATS   &&  right==CHARS)
+      );
 }
