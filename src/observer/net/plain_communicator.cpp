@@ -265,18 +265,6 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
       int cell_num = tuple->cell_num();
       for (int i = 0; i < cell_num; i++)
       {
-        if (i != 0)
-        {
-          const char *delim = " | ";
-          rc = writer_->writen(delim, strlen(delim));
-          if (OB_FAIL(rc))
-          {
-            LOG_WARN("failed to send data to client. err=%s", strerror(errno));
-            sql_result->close();
-            return rc;
-          }
-        }
-
         Value value;
         // 聚合函数目前也通过cell_at计算每一行的值，但不输出，更好的情况是不执行外部二元计算
         rc = tuple->cell_at(i, value);
@@ -289,9 +277,20 @@ RC PlainCommunicator::write_result_internal(SessionEvent *event, bool &need_disc
         std::string cell_str = value.to_string();
         results.push_back(cell_str);
       }
-
     }
-    for(std::string cell_str:results){
+    for(int i=0;i<results.size();i++){
+      if (i != 0)
+      {
+        const char *delim = " | ";
+        rc = writer_->writen(delim, strlen(delim));
+        if (OB_FAIL(rc))
+        {
+          LOG_WARN("failed to send data to client. err=%s", strerror(errno));
+          sql_result->close();
+          return rc;
+        }
+      }
+      std::string cell_str = results[i];
       rc = writer_->writen(cell_str.data(), cell_str.size());
       if (OB_FAIL(rc))
       {

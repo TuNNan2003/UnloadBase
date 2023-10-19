@@ -27,7 +27,7 @@ See the Mulan PSL v2 for more details. */
 
 using namespace common;
 
-#define FAILURE_TYPE
+// #define FAILURE_TYPE
 
 RC ParseStage::handle_request(SQLStageEvent *sql_event)
 {
