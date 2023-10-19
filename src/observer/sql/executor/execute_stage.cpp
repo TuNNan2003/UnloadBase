@@ -24,6 +24,7 @@ See the Mulan PSL v2 for more details. */
 #include "event/session_event.h"
 #include "sql/stmt/stmt.h"
 #include "sql/stmt/select_stmt.h"
+#include "sql/stmt/update_stmt.h"
 #include "storage/default/default_handler.h"
 #include "sql/executor/command_executor.h"
 #include "sql/operator/calc_physical_operator.h"
@@ -37,7 +38,8 @@ RC ExecuteStage::handle_request(SQLStageEvent *sql_event)
   RC rc = RC::SUCCESS;
   const unique_ptr<PhysicalOperator> &physical_operator = sql_event->physical_operator();
   if (physical_operator != nullptr) {
-    return handle_request_with_physical_operator(sql_event);
+    rc = handle_request_with_physical_operator(sql_event);
+    return rc;
   }
 
   SessionEvent *session_event = sql_event->session_event();
@@ -90,6 +92,20 @@ RC ExecuteStage::handle_request_with_physical_operator(SQLStageEvent *sql_event)
       CalcPhysicalOperator *calc_operator = static_cast<CalcPhysicalOperator *>(physical_operator.get());
       for (const unique_ptr<Expression> & expr : calc_operator->expressions()) {
         schema.append_cell(expr->name().c_str());
+      }
+    } break;
+
+    case StmtType::UPDATE: {
+      Session *session = sql_event->session_event()->session();
+      SessionEvent *session_event = sql_event->session_event();
+      SqlResult *sql_result = session_event->sql_result();
+      Db* db = session->get_current_db();
+      UpdateStmt * update_stmt = static_cast<UpdateStmt*>(stmt);
+      Table* table = update_stmt->table();
+      rc = update_stmt->check(table);
+      if(rc != RC::SUCCESS){
+        sql_result->set_return_code(rc);
+        return rc;
       }
     } break;
 

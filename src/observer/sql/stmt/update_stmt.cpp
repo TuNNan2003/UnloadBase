@@ -20,10 +20,13 @@ See the Mulan PSL v2 for more details. */
 
 UpdateStmt::UpdateStmt(Table *table, std::vector<SetVariableSqlNode> setnode, FilterStmt *filter_stmt)
     : table_(table), setnode_(setnode), filter_stmt_(filter_stmt)
-{}
+{
+}
 
-UpdateStmt::~UpdateStmt(){
-  if(nullptr != filter_stmt_){
+UpdateStmt::~UpdateStmt()
+{
+  if (nullptr != filter_stmt_)
+  {
     delete filter_stmt_;
     filter_stmt_ = nullptr;
   }
@@ -31,13 +34,15 @@ UpdateStmt::~UpdateStmt(){
 
 RC UpdateStmt::create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt)
 {
-  if(nullptr == db){
+  if (nullptr == db)
+  {
     LOG_WARN("invalud argument. db is null");
     return RC::INVALID_ARGUMENT;
   }
 
-  Table* table = db->find_table(update_sql.relation_name.c_str());
-  if(nullptr == table){
+  Table *table = db->find_table(update_sql.relation_name.c_str());
+  if (nullptr == table)
+  {
     LOG_WARN("no such table. db = %s, table_name=%s", db->name(), update_sql.relation_name.c_str());
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
@@ -47,12 +52,37 @@ RC UpdateStmt::create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt)
 
   FilterStmt *filter_stmt = nullptr;
   RC rc = FilterStmt::create(
-    db, table, &table_map,  update_sql.conditions.data(), static_cast<int>(update_sql.conditions.size()), filter_stmt);
-  if(rc != RC::SUCCESS){
+      db, table, &table_map, update_sql.conditions.data(), static_cast<int>(update_sql.conditions.size()), filter_stmt);
+  if (rc != RC::SUCCESS)
+  {
     LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
     return rc;
   }
 
   stmt = new UpdateStmt(table, update_sql.setnode, filter_stmt);
   return rc;
+}
+
+RC UpdateStmt::check(Table *table)
+{
+  TableMeta table_meta = table->table_meta();
+  std::vector<FieldMeta> field = *(table_meta.field_metas());
+  std::vector<std::string> attributes;
+  for (int i = 0; i < field.size(); i++)
+  {
+    std::string s = std::string(field[i].name());
+    attributes.emplace_back(s);
+  }
+  std::vector<SetVariableSqlNode> setnode = this->setnode();
+  for (int i = 0; i < setnode.size(); i++)
+  {
+    for (int j = 0; j < attributes.size(); j++)
+    {
+      if (strcmp(setnode[i].name.c_str(), attributes[j].c_str()) != 0)
+      {
+        return RC::INTERNAL;
+      }
+    }
+  }
+  return RC::SUCCESS;
 }

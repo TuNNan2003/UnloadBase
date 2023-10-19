@@ -51,6 +51,7 @@ public:
 
 public:
   static RC create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt);
+  RC check(Table *table);
 
 private:
   Table *table_ = nullptr;
