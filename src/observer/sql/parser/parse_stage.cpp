@@ -27,6 +27,8 @@ See the Mulan PSL v2 for more details. */
 
 using namespace common;
 
+#define FAILURE_TYPE
+
 RC ParseStage::handle_request(SQLStageEvent *sql_event)
 {
   RC rc = RC::SUCCESS;
@@ -58,7 +60,9 @@ RC ParseStage::handle_request(SQLStageEvent *sql_event)
     // set error information to event
     rc = RC::SQL_SYNTAX;
     sql_result->set_return_code(rc);
-    sql_result->set_state_string("Failed to parse sql");
+    #ifdef FAILURE_TYPE
+      sql_result->set_state_string("Failed to parse sql");
+    #endif
     return rc;
   }
 
