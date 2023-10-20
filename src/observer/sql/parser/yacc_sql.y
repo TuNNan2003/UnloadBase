@@ -112,6 +112,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         SUM 
         LIKE
         NOT
+        AS
 
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
@@ -122,6 +123,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   Value *                           value;
   enum CompOp                       comp;
   ExpressionSqlNode *               rel_attr;
+  ExpressionSqlNode *               complex_value;
   RelAttrSqlNode *                  id_meta;
   RelAttrSqlNode *                  attr_meta;
   std::vector<AttrInfoSqlNode> *    attr_infos;
@@ -168,6 +170,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <relation_list>       rel_list
 %type <rel_attr_list>       attr_list
 %type <expression>          expression
+%type <complex_value>       complex_value
+%type <string>              alias
 %type <expression_list>     expression_list
 %type <sql_node>            calc_stmt
 %type <sql_node>            select_stmt
@@ -563,6 +567,25 @@ select_attr:
       }
       $$->emplace_back($1);
     }
+    | rel_attr alias attr_list{
+      if ($3 != nullptr) {
+        $$ = $3;
+      } else {
+        $$ = new std::vector<ExpressionSqlNode*>;
+      }
+      $1->name=$2;
+      $$->emplace_back($1);
+      free($2);
+    }
+    ;
+
+alias:
+    ID{
+      $$=$1;
+    }
+    | AS ID{
+      $$=$2;
+    }
     ;
 
 rel_attr:
@@ -621,6 +644,38 @@ rel_attr:
       $$->type=EXPRTYPE::VAL;
       $$->name=$1->to_string();
       delete $1;
+    }
+    | complex_value{
+      $$ = $1;
+    }
+    ;
+
+complex_value:
+    LENGTH_FUNC LBRACE SSS RBRACE{
+      $$ = new ExpressionSqlNode;
+      std::string str=std::string($3);
+      $$->name = "length";
+      $$->name.append("(").append(str).append(")"); 
+      int len = SQLFunction::length($3);
+      $$->value=Value(len);
+      $$->type=EXPRTYPE::VAL;
+      free($3);
+    }
+    | ROUND_FUNC LBRACE FLOAT COMMA NUMBER RBRACE{
+      $$ = new ExpressionSqlNode;
+      $$->name = "round";
+      $$->name.append("(").append(std::to_string($3)).append(",").append(std::to_string($5)).append(")");
+      float num = SQLFunction::round($3,$5);
+      $$->value=Value(num);
+      $$->type=EXPRTYPE::VAL;
+    }
+    | ROUND_FUNC LBRACE NUMBER COMMA NUMBER RBRACE{
+      $$ = new ExpressionSqlNode;
+      $$->name = "round";
+      $$->name.append("(").append(std::to_string($3)).append(",").append(std::to_string($5)).append(")"); 
+      float num = SQLFunction::round($3,$5);
+      $$->value=Value(num);
+      $$->type=EXPRTYPE::VAL;
     }
     ;
 
@@ -734,6 +789,16 @@ attr_list:
       }
 
       $$->emplace_back($2);
+    }
+    | COMMA rel_attr alias attr_list{
+      if ($4 != nullptr) {
+        $$ = $4;
+      } else {
+        $$ = new std::vector<ExpressionSqlNode*>;
+      }
+      $2->name=$3;
+      $$->emplace_back($2);
+      free($3);
     }
     ;
 

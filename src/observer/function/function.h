@@ -64,9 +64,9 @@ enum SqlCalculateType{
 class SQLFunction{
     public:
         static void calc(Value &value,FunctionName name,FunctionParams param);
-    private:
         static int length(const char* str);
         static float round(float num,int mark);
+    private:
         static std::string date_format(std::shared_ptr<Date> date,std::string fmt);
         static std::string date_format(int year,int day,int month,const char* fmt);
         static char toBiggerCase(char ch);
