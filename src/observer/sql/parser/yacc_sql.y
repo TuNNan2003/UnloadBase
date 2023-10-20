@@ -656,7 +656,7 @@ complex_value:
       std::string str=std::string($3);
       $$->name = "length";
       $$->name.append("(").append(str).append(")"); 
-      int len = SQLFunction::length($3);
+      int len = SQLFunction::length($3)-2;
       $$->value=Value(len);
       $$->type=EXPRTYPE::VAL;
       free($3);

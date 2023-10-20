@@ -2425,7 +2425,7 @@ yyreduce:
       std::string str=std::string((yyvsp[-1].string));
       (yyval.complex_value)->name = "length";
       (yyval.complex_value)->name.append("(").append(str).append(")"); 
-      int len = SQLFunction::length((yyvsp[-1].string));
+      int len = SQLFunction::length((yyvsp[-1].string))-2;
       (yyval.complex_value)->value=Value(len);
       (yyval.complex_value)->type=EXPRTYPE::VAL;
       free((yyvsp[-1].string));
