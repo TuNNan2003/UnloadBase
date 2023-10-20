@@ -251,8 +251,13 @@ RC SelectStmt::create(Db *db, const SelectSqlNode &select_sql, Stmt *&stmt)
   std::unordered_map<std::string,std::shared_ptr<AggregateFunction>> query_aggrs;
   // 是否聚合，为0时代表常数表达式，为1代表普通字段表达式，为2代表聚合函数字段表达式
   int funcType=0;
+  int exprNum=select_sql.attributes.size();
+  std::vector<std::string> names=std::vector<std::string>(exprNum);
   for (int i = static_cast<int>(select_sql.attributes.size()) - 1; i >= 0; i--) {
     ExpressionSqlNode* expr_attr = select_sql.attributes[i];
+
+    // 设置展示的表头名称
+    names[exprNum-i-1]=expr_attr->name;
 
     // 表达式内容为值
     if(expr_attr->type==EXPRTYPE::VAL){
@@ -395,9 +400,10 @@ RC SelectStmt::create(Db *db, const SelectSqlNode &select_sql, Stmt *&stmt)
   // TODO add expression copy
   select_stmt->tables_.swap(tables);
   select_stmt->exprs_.swap(query_exprs);
+  select_stmt->names_.swap(names);
   select_stmt->filter_stmt_ = filter_stmt;
   select_stmt->joinFlag_=select_sql.joinFlag;
-  funcType==2?select_stmt->aggrFlag_=true:select_stmt->aggrFlag_=false;
+  select_stmt->exprState_=funcType;
   stmt = select_stmt;
   return RC::SUCCESS;
 }

@@ -89,6 +89,14 @@ RC LogicalPlanGenerator::create_plan(
 
   const std::vector<Table *> &tables = select_stmt->tables();
   std::vector<std::unique_ptr<Expression>> &expressions = select_stmt->query_exprs();
+
+  // 不扫表的常量表达式按照CALC来处理
+  if(select_stmt->isVal()&&tables.size()==0){
+    std::unique_ptr<LogicalOperator> val_oper(new CalcLogicalOperator(std::move(expressions)));
+    logical_operator.swap(val_oper);
+    return RC::SUCCESS;
+  }
+
   for (Table *table : tables) {
     // 不给获取表算子传入fields
     unique_ptr<LogicalOperator> table_get_oper(new TableGetLogicalOperator(table,true/*readonly*/));

@@ -60,12 +60,23 @@ public:
   }
 
   bool isAggr(){
-    return this->aggrFlag_;
+    return this->exprState_==2;
+  }
+
+  bool isVal(){
+    return this->exprState_==0;
+  }
+
+  std::vector<std::string> &names()
+  {
+    return names_;
   }
 
 private:
   std::vector<std::unique_ptr<Expression> > exprs_;
-  bool aggrFlag_;
+  std::vector<std::string> names_;
+  // 描述表达式类型，0:常量表达式 1:查询表达式，2:聚合表达式 
+  int exprState_;
   std::vector<Table *> tables_;
   FilterStmt *filter_stmt_ = nullptr;
   bool joinFlag_=false;

@@ -492,6 +492,14 @@ select_stmt:        /*  select 语句的语法解析树*/
       }
       $$->selection.joinFlag=true;
     }
+    | SELECT select_attr
+    {
+      $$ = new ParsedSqlNode(SCF_SELECT);
+      if ($2 != nullptr) {
+        $$->selection.attributes.swap(*$2);
+        delete $2;
+      }
+    }
     ;
 calc_stmt:
     CALC expression_list
@@ -564,6 +572,8 @@ rel_attr:
       $$->right=$3;
       $$->calc=CalcOp::ADD;
       $$->type=EXPRTYPE::EXPR;
+      $$->name=$1->name;
+      $$->name.append("+").append($3->name);
     }
     | rel_attr '-' rel_attr{
       $$ = new ExpressionSqlNode;
@@ -571,6 +581,8 @@ rel_attr:
       $$->right=$3;
       $$->calc=CalcOp::SUB;
       $$->type=EXPRTYPE::EXPR;
+      $$->name=$1->name;
+      $$->name.append("-").append($3->name);
     }
     | rel_attr '*' rel_attr{
       $$ = new ExpressionSqlNode;
@@ -578,6 +590,8 @@ rel_attr:
       $$->right=$3;
       $$->calc=CalcOp::MUL;
       $$->type=EXPRTYPE::EXPR;
+      $$->name=$1->name;
+      $$->name.append("*").append($3->name);
     }
     | rel_attr '/' rel_attr{
       $$ = new ExpressionSqlNode;
@@ -585,20 +599,27 @@ rel_attr:
       $$->right=$3;
       $$->calc=CalcOp::DIV;
       $$->type=EXPRTYPE::EXPR;
+      $$->name=$1->name;
+      $$->name.append("/").append($3->name);
     }
     | LBRACE rel_attr RBRACE{
       $$ = $2;
+      std::string str=$2->name;
+      $$->name="(";
+      $$->name.append(str).append(")");
     }
     | attr_meta{
       $$ = new ExpressionSqlNode;
       $$->attr=*$1;
       $$->type=EXPRTYPE::ATTR;
+      $$->name=$1->name;
       free($1);
     }
     | value{
       $$ = new ExpressionSqlNode;
       $$->value=*$1;
       $$->type=EXPRTYPE::VAL;
+      $$->name=$1->to_string();
       delete $1;
     }
     ;
@@ -609,45 +630,69 @@ attr_meta:
     }
     | LENGTH_FUNC LBRACE id_meta RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->function_name = FunctionName::LENGTH; 
+      $$->name="length";
+      $$->name.append("(").append(str).append(")"); 
     }
     | MAX LBRACE id_meta RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->function_name = FunctionName::AGGREGATE_MAX;
-      $$->sql_type =  SqlCalculateType::AGGREGATE;   
+      $$->sql_type =  SqlCalculateType::AGGREGATE;  
+      $$->name="max";
+      $$->name.append("(").append(str).append(")"); 
     }
     | MIN LBRACE id_meta RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->function_name = FunctionName::AGGREGATE_MIN;
       $$->sql_type = SqlCalculateType::AGGREGATE;
+      $$->name="min";
+      $$->name.append("(").append(str).append(")"); 
     }
     | COUNT LBRACE id_meta RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->function_name = FunctionName::AGGREGATE_COUNT;
       $$->sql_type = SqlCalculateType::AGGREGATE;
+      $$->name="count";
+      $$->name.append("(").append(str).append(")"); 
     }
     | AVG LBRACE id_meta RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->function_name = FunctionName::AGGREGATE_AVG;
       $$->sql_type = SqlCalculateType::AGGREGATE;
+      $$->name="avg";
+      $$->name.append("(").append(str).append(")"); 
     }
     | SUM LBRACE id_meta RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->function_name = FunctionName::AGGREGATE_SUM;
       $$->sql_type = SqlCalculateType::AGGREGATE;
+      $$->name="sum";
+      $$->name.append("(").append(str).append(")"); 
     }
     | DATE_FORMAT_FUNC LBRACE id_meta COMMA SSS RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->param.str_info = $5; 
       $$->param.type=ParamType::STR_PARAM;
       $$->function_name = FunctionName::DATE_FORMAT; 
+      $$->name="date_format";
+      $$->name.append("(").append(str).append(",").append($5).append(")"); 
       free($5);
     }
     | ROUND_FUNC LBRACE id_meta COMMA number RBRACE{
       $$ = $3;
+      std::string str=$3->name;
       $$->param.num_info.int_value_ = $5; 
       $$->param.type=ParamType::INT_PARAM;
-      $$->function_name = FunctionName::ROUND; 
+      $$->function_name = FunctionName::ROUND;
+      $$->name="round";
+      $$->name.append("(").append(str).append(",").append(std::to_string($5)).append(")"); 
     }
     ;
 
@@ -656,16 +701,21 @@ id_meta:
       $$ = new RelAttrSqlNode;
       $$->relation_name  = "";
       $$->attribute_name = "*";
+      $$->name=std::string("*");
     }
     | ID {
       $$ = new RelAttrSqlNode;
       $$->attribute_name = $1;
+      $$->name = std::string($1);
       free($1);
     }
     | ID DOT ID {
       $$ = new RelAttrSqlNode;
       $$->relation_name  = $1;
       $$->attribute_name = $3;
+      $$->name=std::string($1);
+      $$->name.append(".");
+      $$->name.append($3);
       free($1);
       free($3);
     }

@@ -73,9 +73,8 @@ RC ExecuteStage::handle_request_with_physical_operator(SQLStageEvent *sql_event)
     case StmtType::SELECT: {
       SelectStmt *select_stmt = static_cast<SelectStmt *>(stmt);
       aggrFlag=select_stmt->isAggr();
-      // 此处忽略在select关键字和表达式之间的其他内容，默认select之后就是表达式
-      exprRawText=Algorithm::splitAttr(sql_event->sql(),1);
-      LOG_DEBUG("size is %d",exprRawText.size());
+      // 获取前端解析的内容
+      exprRawText=select_stmt->names();
       // 特殊处理通配符
       if(exprRawText.size()==1&&exprRawText[0]=="*"){
         exprRawText.clear();

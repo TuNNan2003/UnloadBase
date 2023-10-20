@@ -45,6 +45,7 @@ struct RelAttrSqlNode
   FunctionName function_name=NULLFUNC; ///< function name       函数名
   SqlCalculateType sql_type=NULLSql;
   FunctionParams param;        ///< callback param              函数参数
+  std::string name;            ///< raw expression text         原始表达式字符串
 };
 
 /**
@@ -127,6 +128,7 @@ struct ExpressionSqlNode{
   ExpressionSqlNode* left=nullptr;
   ExpressionSqlNode* right=nullptr; 
   CalcOp             calc;
+  std::string        name;
 };
 
 /**
