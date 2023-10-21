@@ -136,6 +136,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   std::vector<ConditionSqlNode> *   condition_list;
   std::vector<ExpressionSqlNode*>*  rel_attr_list;
   std::vector<std::string> *        relation_list;
+  std::vector<std::vector<Value>>* tuple_list;
   char *                            string;
   int                               number;
   float                             floats;
@@ -176,6 +177,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <string>              alias
 %type <flag>                nullable
 %type <expression_list>     expression_list
+%type <tuple_list>          tuple_list
 %type <sql_node>            calc_stmt
 %type <sql_node>            select_stmt
 %type <sql_node>            insert_stmt
@@ -393,33 +395,43 @@ type:
     | DATE_T   { $$=DATES; }
     ;
 insert_stmt:        /*insert   语句的语法解析树*/
-    INSERT INTO ID VALUES LBRACE value value_list RBRACE 
+    INSERT INTO ID VALUES tuple_list 
     {
       $$ = new ParsedSqlNode(SCF_INSERT);
       $$->insertion.relation_name = $3;
-      if ($7 != nullptr) {
-        $$->insertion.values.swap(*$7);
+      if ($5 != nullptr) {
+        $$->insertion.values.swap(*$5);
       }
-      $$->insertion.values.emplace_back(*$6);
-      std::reverse($$->insertion.values.begin(), $$->insertion.values.end());
-      delete $6;
+      delete $5;
       free($3);
     }
     ;
 
-value_list:
-    /* empty */
+tuple_list:
+    tuple_list COMMA LBRACE value_list RBRACE
     {
-      $$ = nullptr;
+      $$ = $1;
+      $$->emplace_back(*$4);
+      delete $4;
     }
-    | COMMA value value_list  { 
-      if ($3 != nullptr) {
-        $$ = $3;
-      } else {
-        $$ = new std::vector<Value>;
-      }
+    | LBRACE value_list RBRACE
+    {
+      $$ = new std::vector<std::vector<Value>>();
       $$->emplace_back(*$2);
       delete $2;
+    }
+    ;
+
+value_list:
+    value_list COMMA value { 
+      $$ = $1;
+      $$->emplace_back(*$3);
+      delete $3;
+    }
+    | value{
+      $$ = new std::vector<Value>();
+      $$->emplace_back(*$1);
+      delete $1;
     }
     ;
 value:
