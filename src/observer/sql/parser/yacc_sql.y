@@ -947,6 +947,26 @@ condition:
       $$->comp = NOT_NULL_OP;
       delete $1;
     }
+    | value IS NULL_T{
+      $$ = new ConditionSqlNode;
+      $$->left_is_attr = 0;
+      $$->left_value = *$1;
+      $$->right_is_attr = 0;
+      $$->right_value = Value(AttrType::NULLTYPE);
+      $$->comp = NULL_OP;
+
+      delete $1;
+    }
+    | value IS NOT NULL_T{
+      $$ = new ConditionSqlNode;
+      $$->left_is_attr = 0;
+      $$->left_value = *$1;
+      $$->right_is_attr = 0;
+      $$->right_value = Value(AttrType::NULLTYPE);
+      $$->comp = NOT_NULL_OP;
+
+      delete $1;
+    }
     ;
 join_tables:
     join_tables INNER JOIN ID on{
