@@ -27,11 +27,10 @@ See the Mulan PSL v2 for more details.
 
 class AggregateFunction{
 public:
-    AggregateFunction() : begin_flag(true) {}
+    AggregateFunction() : res(AttrType::NULLTYPE) {}
     virtual void calc(Value value) {return; }
     virtual void set(Value& _res){};
 protected:
-    bool begin_flag;
     Value res;
 };
 
@@ -55,7 +54,7 @@ public:
     void calc(Value value);
     void set(Value& res);
 private:
-    int count;
+    int count=0;
 };
 
 class SumAggregateFunction : public AggregateFunction{
@@ -69,7 +68,9 @@ class CountAggregateFunction : public AggregateFunction{
 public:
     CountAggregateFunction() : AggregateFunction() {}
     void calc(Value value);
-    void set(Value& _res){_res=res; return;}
+    void set(Value& _res){_res.set_int(count); return;}
+private:
+    int count=0;
 };
 
 class AggregateFunctionFactory{

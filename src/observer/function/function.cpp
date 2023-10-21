@@ -22,6 +22,9 @@ See the Mulan PSL v2 for more details.
 #include "function.h"
 
 void SQLFunction::calc(Value &value,FunctionName name,FunctionParams param){
+    if(value.attr_type()==AttrType::NULLTYPE){
+        return;
+    }
     switch (name)
     {
     case FunctionName::LENGTH:{

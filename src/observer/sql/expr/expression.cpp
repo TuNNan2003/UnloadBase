@@ -112,6 +112,12 @@ ComparisonExpr::~ComparisonExpr()
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
   RC rc = RC::SUCCESS;
+
+  if(left.attr_type()==AttrType::NULLTYPE||right.attr_type()==AttrType::NULLTYPE){
+    result = false;
+    return rc;
+  }
+
   if (comp_ == LIKE_OP)
   {
     result = left.like(right);
@@ -287,6 +293,11 @@ AttrType ArithmeticExpr::value_type() const
 RC ArithmeticExpr::calc_value(const Value &left_value, const Value &right_value, Value &value) const
 {
   RC rc = RC::SUCCESS;
+
+  if(left_value.attr_type()==AttrType::NULLTYPE||right_value.attr_type()==AttrType::NULLTYPE){
+    value.set_type(AttrType::NULLTYPE);
+    return rc;
+  }
 
   const AttrType target_type = value_type();
 

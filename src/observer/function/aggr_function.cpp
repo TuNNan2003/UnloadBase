@@ -42,10 +42,14 @@ See the Mulan PSL v2 for more details.
 }
 
 void MaxAggregateFunction::calc(Value value){
-    if(begin_flag){
-        std::swap(res, value);
-        begin_flag = false;
+    if(res.attr_type()==NULLTYPE){
+        if(value.attr_type()!=NULLTYPE){
+            std::swap(res, value);
+        }
     }else{
+        if(value.attr_type()==NULLTYPE){
+            return;
+        }
         if(res.compare(value) <= 0){
             std::swap(res, value);
         }
@@ -53,10 +57,14 @@ void MaxAggregateFunction::calc(Value value){
 }
 
 void MinAggregateFunction::calc(Value value){
-    if(begin_flag){
-        std::swap(res, value);
-        begin_flag = false;
+    if(res.attr_type()==NULLTYPE){
+        if(value.attr_type()!=NULLTYPE){
+            std::swap(res, value);
+        }
     }else{
+        if(value.attr_type()==NULLTYPE){
+            return;
+        }
         if(res.compare(value) >= 0){
             std::swap(res, value);
         }
@@ -64,36 +72,48 @@ void MinAggregateFunction::calc(Value value){
 }
 
 void SumAggregateFunction::calc(Value value){
-    if(begin_flag){
-        std::swap(value, res);
-        begin_flag = false;
+    if(res.attr_type()==NULLTYPE){
+        if(value.attr_type()!=NULLTYPE){
+            std::swap(res, value);
+        }
     }else{
+        if(value.attr_type()==NULLTYPE){
+            return;
+        }
         res.add(value);
     }
 }
 
 void AvgAggregateFunction::calc(Value value){
-    if(begin_flag){
-        std::swap(res, value);
-        count = 1;
-        begin_flag = false;
+    if(res.attr_type()==NULLTYPE){
+        if(value.attr_type()!=NULLTYPE){
+            std::swap(res, value);
+            count = 1;
+        }
     }else{
+        if(value.attr_type()==NULLTYPE){
+            return;
+        }
         res.add(value);
         count++;
     }
 }
 
 void AvgAggregateFunction::set(Value& res_){
+    if(res.attr_type()==NULLTYPE){
+        res_.set_type(AttrType::NULLTYPE);
+        return;
+    }
     if(count != 0){
         res_.set_float(res.get_float() / count);
+    }
+    else{
+        res_.set_type(AttrType::NULLTYPE);
     }
 }
 
 void CountAggregateFunction::calc(Value value){
-    if(begin_flag){
-        res.set_int(1);
-        begin_flag = false;
-    }else{
-        res.set_int(res.get_int() + 1);
+    if(value.attr_type()!=NULLTYPE){
+        count++;
     }
 }

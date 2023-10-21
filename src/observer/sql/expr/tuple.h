@@ -24,6 +24,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/parser/value.h"
 #include "sql/expr/expression.h"
 #include "storage/record/record.h"
+#include "attr/null_table.h"
 
 class Table;
 
@@ -165,11 +166,52 @@ public:
     return speces_.size();
   }
 
+  bool find_null(int index) const{
+    const FieldMeta* field_meta=nullptr;
+    if(getNullTableMeta(field_meta)!=RC::SUCCESS){
+      return false;
+    }
+    if(field_meta==nullptr){
+      return false;
+    }
+    const TableMeta &table_meta=table_->table_meta();
+    const char* nullTableData=this->record_->data() + field_meta->offset();
+    NullTable nullTable=NullTable(nullTableData,table_meta.field_num()-table_meta.sys_field_num());
+    index-=table_meta.sys_field_num();
+    return nullTable.isNull(index);
+  }
+
+  RC getNullTableMeta(const FieldMeta* &nullTableMeta) const{
+    const char* table_name=table_->name();
+    const char* field_name=attr_type_to_string(AttrType::NULLTYPE);
+    const FieldExpr *field_expr=nullptr;
+    for (size_t i = 0; i < speces_.size(); ++i) {
+      const FieldExpr *tmp_field_expr = speces_[i];
+      const Field &field = tmp_field_expr->field();
+      if (0 == strcmp(field_name, field.field_name())) {
+        field_expr=tmp_field_expr;
+        break;
+      }
+    }
+    if(field_expr==nullptr){
+      return RC::NOTFOUND;
+    }
+    nullTableMeta=field_expr->field().meta();
+    return RC::SUCCESS;
+  }
+
+  // select查找字段值的唯一转换函数
   RC cell_at(int index, Value &cell) const override
   {
     if (index < 0 || index >= static_cast<int>(speces_.size())) {
       LOG_WARN("invalid argument. index=%d", index);
       return RC::INVALID_ARGUMENT;
+    }
+
+    // 查询NULL表检验是否为null
+    if(find_null(index)){
+      cell.set_type(AttrType::NULLTYPE);
+      return RC::SUCCESS;
     }
 
     FieldExpr *field_expr = speces_[index];

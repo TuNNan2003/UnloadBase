@@ -28,6 +28,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/index/index.h"
 #include "storage/index/bplus_tree_index.h"
 #include "storage/trx/trx.h"
+#include "attr/null_table.h"
 
 Table::~Table()
 {
@@ -352,10 +353,15 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value &value = values[i];
-    if (field->type() != value.attr_type()) {
+    if (field->type() != value.attr_type() && value.attr_type()!=AttrType::NULLTYPE) {
       LOG_ERROR("Invalid value type. table name =%s, field name=%s, type=%d, but given=%d",
                 table_meta_.name(), field->name(), field->type(), value.attr_type());
       return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+    }else if(value.attr_type()==AttrType::NULLTYPE){
+      if(!field->nullable()){
+        LOG_DEBUG("Unable to insert null value into not null field");
+        return RC::VARIABLE_NOT_VALID;
+      }
     }
   }
 
@@ -363,10 +369,18 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
   int record_size = table_meta_.record_size();
   char *record_data = (char *)malloc(record_size);
 
+  // 初始化null表
+  NullTable nullTable=NullTable(value_num);
+
   for (int i = 0; i < value_num; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     const Value &value = values[i];
     int copy_len = field->len();
+
+    if(value.attr_type()==AttrType::NULLTYPE){
+      nullTable.setNull(i);
+      continue;
+    }
 
     // 字符串数据加入终止符的长度，还需要考虑是不是变长类型(严格来说任何数据都要考虑)
     if (field->type() == CHARS && copy_len!=VARTYPELEN) {
@@ -412,6 +426,10 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
     }
 
   }
+
+  // 设置null表
+  const FieldMeta *nullTableMeta =table_meta_.field(attr_type_to_string(AttrType::NULLTYPE));
+  memcpy(record_data + nullTableMeta->offset(), nullTable.toBytes(), nullTableMeta->len());
 
   record.set_data_owner(record_data, record_size);
   return RC::SUCCESS;
@@ -562,41 +580,64 @@ RC Table::update_record(RowTuple* row_tuple, Value value, int index){
   int fieldLen=fieldMeta->len();
   char* record_data=row_tuple->record().data();
 
-  if(fieldLen==VARTYPELEN){
-    // 更新变长字段
-    // 取出原本记录中的指针，解析待修改数据的长度和地址
-    varLenPointer pointer=*((varLenPointer*)(record_data+fieldMeta->offset()));
-    unsigned long long address=varLenAttr::parseAddr(pointer);
-    int srcLen=varLenAttr::parseLen(pointer);
-
-    // 取出open table过程中加载的代理，可以避免在不存在的字段更新
-    if(this->var_handlers_.find(fieldMeta->name())==this->var_handlers_.end()){
-      LOG_ERROR("no var file for this field, name is %s",fieldMeta->name());
-      return RC::EMPTY;
+  // 处理字段不匹配和空字段情况
+  if(fieldMeta->type()!=value.attr_type()&&value.attr_type()!=AttrType::NULLTYPE){
+    LOG_DEBUG("type not match, field type is %s, update value type is %s",
+    attr_type_to_string(fieldMeta->type()),attr_type_to_string(value.attr_type()));
+  }else if(value.attr_type()==AttrType::NULLTYPE){
+    if(!fieldMeta->nullable()){
+      LOG_DEBUG("field is not nullable, can't update to null");
+      return RC::VARIABLE_NOT_VALID;
+    }else{
+      const FieldMeta* nullTableMeta;
+      if(row_tuple->getNullTableMeta(nullTableMeta)!=RC::SUCCESS){
+        LOG_DEBUG("null table not found, check your db save version");
+        return RC::VARIABLE_NOT_VALID;
+      }
+      const char* nullTableData=record_data + nullTableMeta->offset();
+      NullTable nullTable=NullTable(nullTableData,table_meta_.field_num()-table_meta_.sys_field_num());
+      index-=table_meta_.sys_field_num();
+      nullTable.setNull(index);
+      memcpy(record_data+nullTableMeta->offset(),nullTable.toBytes(),nullTableMeta->len());
     }
-    VarRecordFileHandler* handler=&var_handlers_.at(fieldMeta->name());
+  }else{ // 字段校验通过且不为空值
+    if(fieldLen==VARTYPELEN){
+      // 更新变长字段
+      // 取出原本记录中的指针，解析待修改数据的长度和地址
+      varLenPointer pointer=*((varLenPointer*)(record_data+fieldMeta->offset()));
+      unsigned long long address=varLenAttr::parseAddr(pointer);
+      int srcLen=varLenAttr::parseLen(pointer);
 
-    // 更新变长字段并进行持久化
-    int len=value.length();
-    RC rc=handler->update(address,value.data(),srcLen,len);
-    if(rc==RC::EMPTY){
-      LOG_ERROR("handler init error, empty file name");
-      return rc;
+      // 取出open table过程中加载的代理，可以避免在不存在的字段更新
+      if(this->var_handlers_.find(fieldMeta->name())==this->var_handlers_.end()){
+        LOG_ERROR("no var file for this field, name is %s",fieldMeta->name());
+        return RC::EMPTY;
+      }
+      VarRecordFileHandler* handler=&var_handlers_.at(fieldMeta->name());
+
+      // 更新变长字段并进行持久化
+      int len=value.length();
+      RC rc=handler->update(address,value.data(),srcLen,len);
+      if(rc==RC::EMPTY){
+        LOG_ERROR("handler init error, empty file name");
+        return rc;
+      }
+      else if(rc==RC::FILE_NOT_OPENED){
+        LOG_ERROR("file not opened, full name is %s", handler->getFullName());
+        return rc;
+      }
+
+      // 利用更新后返回的新地址重新构建指针并存入定长字段区域
+      pointer=varLenAttr::makeVarLenPointer(len,address);
+      memcpy(record_data + fieldMeta->offset(), &pointer, varLenAttr::getByteNumULL());
+
     }
-    else if(rc==RC::FILE_NOT_OPENED){
-      LOG_ERROR("file not opened, full name is %s", handler->getFullName());
-      return rc;
+    else{
+      // 更新定长字段 
+      memcpy(record_data+fieldMeta->offset(),value.data(),fieldLen);
     }
-
-    // 利用更新后返回的新地址重新构建指针并存入定长字段区域
-    pointer=varLenAttr::makeVarLenPointer(len,address);
-    memcpy(record_data + fieldMeta->offset(), &pointer, varLenAttr::getByteNumULL());
-
   }
-  else{
-    // 更新定长字段 
-    memcpy(record_data+fieldMeta->offset(),value.data(),fieldLen);
-  }
+
   Record record_updated(row_tuple->record());
   RID rid = row_tuple->record().rid();
   RC rc = record_handler_->update_record(&rid, record_updated);

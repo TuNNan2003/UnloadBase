@@ -113,6 +113,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         LIKE
         NOT
         AS
+        NULL_T
 
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
@@ -138,6 +139,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   char *                            string;
   int                               number;
   float                             floats;
+  bool                              flag;
 }
 
 %token <number> NUMBER
@@ -172,6 +174,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <expression>          expression
 %type <complex_value>       complex_value
 %type <string>              alias
+%type <flag>                nullable
 %type <expression_list>     expression_list
 %type <sql_node>            calc_stmt
 %type <sql_node>            select_stmt
@@ -346,30 +349,40 @@ attr_def_list:
     ;
     
 attr_def:
-    ID type LBRACE number RBRACE 
+    ID type LBRACE number RBRACE nullable
     {
       $$ = new AttrInfoSqlNode;
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = $4;
+      $$->nullable=$6;
       free($1);
     }
-    | ID TEXT_T{
+    | ID TEXT_T nullable{
       $$ = new AttrInfoSqlNode;
       $$->type = (AttrType)CHARS;
       $$->name = $1;
       $$->length = -1;
+      $$->nullable=$3;
       free($1);
     }
-    | ID type
+    | ID type nullable
     {
       $$ = new AttrInfoSqlNode;
       $$->type = (AttrType)$2;
       $$->name = $1;
       $$->length = 4;
+      $$->nullable=$3;
       free($1);
     }
     ;
+
+nullable:
+    { $$=true; }
+    | NULL_T{ $$=true; }
+    | NOT NULL_T { $$=false; }
+
+
 number:
     NUMBER {$$ = $1;}
     ;
@@ -430,6 +443,9 @@ value:
       char *tmp = common::substr($1,1,strlen($1)-2);
       $$ = new Value(tmp);
       free(tmp);
+    }
+    | NULL_T{
+      $$ = new Value(AttrType::NULLTYPE);
     }
     ;
     

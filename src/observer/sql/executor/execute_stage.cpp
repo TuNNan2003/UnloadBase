@@ -81,7 +81,9 @@ RC ExecuteStage::handle_request_with_physical_operator(SQLStageEvent *sql_event)
         const std::vector<Table*>&tables=select_stmt->tables();
         for(Table* table:tables){
           for(FieldMeta field:*table->table_meta().field_metas()){
-            exprRawText.push_back(field.name());
+            if(field.visible()){
+              exprRawText.push_back(field.name());
+            }
           }
         }
       }

@@ -22,11 +22,13 @@ See the Mulan PSL v2 for more details. */
 #include "attr/typecast.h"
 #include "algorithm/algorithm.h"
 
-const char *ATTR_TYPE_NAME[] = {"undefined","dates", "chars", "ints", "floats", "booleans"};
+const char *ATTR_TYPE_NAME[] = {"undefined","dates", "chars", "ints", "floats", "booleans","null"};
+
+#define  NULLTYPESTR "NULL"
 
 const char *attr_type_to_string(AttrType type)
 {
-  if (type >= UNDEFINED && type <= FLOATS) {
+  if (type >= UNDEFINED && type <= NULLTYPE) {
     return ATTR_TYPE_NAME[type];
   }
   return "unknown";
@@ -62,6 +64,9 @@ Value::Value(const char *s, int len /*= 0*/)
 }
 Value::Value(const char *date,bool dateFlag){
   set_date(date);
+}
+Value::Value(AttrType type){
+  this->attr_type_=type;
 }
 
 void Value::set_data(char *data, int length)
@@ -148,6 +153,9 @@ void Value::set_value(const Value &value)
     case BOOLEANS: {
       set_boolean(value.get_boolean());
     } break;
+    case NULLTYPE: {
+      attr_type_=AttrType::NULLTYPE;
+    } break;
     case UNDEFINED: {
       ASSERT(false, "got an invalid value type");
     } break;
@@ -187,7 +195,10 @@ std::string Value::to_string() const
       os << num_value_.bool_value_;
     } break;
     case CHARS: {
-        os << str_value_;
+      os << str_value_;
+    } break;
+    case NULLTYPE: {
+      return NULLTYPESTR;
     } break;
     default: {
       LOG_WARN("unsupported attr type: %d", attr_type_);
@@ -198,6 +209,9 @@ std::string Value::to_string() const
 
 int Value::compare(const Value &other) const
 {
+  if(this->attr_type_==AttrType::NULLTYPE||other.attr_type_==AttrType::NULLTYPE){
+    return -1;
+  }
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
       case DATES: {
@@ -396,6 +410,8 @@ bool Value::get_boolean() const
 bool Value::tryCompare(AttrType left,AttrType right){
   return (
       (left == right)                       ||
+      (left==NULLTYPE)                      ||
+      (right==NULLTYPE)                     ||
       (left == INTS   &&  right== FLOATS)   ||
       (left ==FLOATS  &&  right==INTS)      ||
       (left==CHARS    &&  right==INTS)      || 

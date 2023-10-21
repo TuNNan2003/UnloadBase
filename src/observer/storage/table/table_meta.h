@@ -75,6 +75,7 @@ protected:
   std::string name_;
   std::vector<FieldMeta> fields_;  // 包含sys_fields
   std::vector<IndexMeta> indexes_;
+  int32_t sys_field_num_ = 0;          // 系统表数量
 
   int record_size_ = 0;
 };

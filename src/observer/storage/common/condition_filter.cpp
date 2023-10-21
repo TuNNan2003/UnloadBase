@@ -138,6 +138,10 @@ bool DefaultConditionFilter::filter(const Record &rec) const
     right_value.set_value(right_.value);
   }
 
+  if(left_value.attr_type()==AttrType::NULLTYPE||right_value.attr_type()==AttrType::NULLTYPE){
+    return false;
+  }
+
   int cmp_result = left_value.compare(right_value);
 
   switch (comp_op_) {

@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 #include "storage/trx/trx.h"
 #include "storage/var/var_record.h"
+#include "attr/null_table.h"
 
 using namespace std;
 
@@ -27,6 +28,7 @@ static const Json::StaticString FIELD_TABLE_ID("table_id");
 static const Json::StaticString FIELD_TABLE_NAME("table_name");
 static const Json::StaticString FIELD_FIELDS("fields");
 static const Json::StaticString FIELD_INDEXES("indexes");
+static const Json::StaticString FIELD_SYS_FIELDS_NUM("sys_fields_num");
 
 TableMeta::TableMeta(const TableMeta &other)
     : name_(other.name_), fields_(other.fields_), indexes_(other.indexes_), record_size_(other.record_size_)
@@ -52,17 +54,27 @@ RC TableMeta::init(int32_t table_id, const char *name, int field_num, const Attr
     return RC::INVALID_ARGUMENT;
   }
 
+  int nullCount=0;
+  for(int i=0;i<field_num;i++){
+    if(attributes[i].nullable){
+      nullCount++;
+    }
+  }
+
   RC rc = RC::SUCCESS;
   
   int field_offset = 0;
   int trx_field_num = 0;
+  sys_field_num_=0;
+
+  // 处理事务表头
   const vector<FieldMeta> *trx_fields = TrxKit::instance()->trx_fields();
   if (trx_fields != nullptr) {
     fields_.resize(field_num + trx_fields->size());
 
     for (size_t i = 0; i < trx_fields->size(); i++) {
       const FieldMeta &field_meta = (*trx_fields)[i];
-      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), false/*visible*/);
+      fields_[i] = FieldMeta(field_meta.name(), field_meta.type(), field_offset, field_meta.len(), false/*visible*/,false);
       field_offset += field_meta.len();
     }
 
@@ -70,11 +82,23 @@ RC TableMeta::init(int32_t table_id, const char *name, int field_num, const Attr
   } else {
     fields_.resize(field_num);
   }
+  sys_field_num_=trx_field_num;
 
+  // 处理NULL值表
+  if(nullCount!=0){
+    fields_.resize(field_num+1);
+    int nullTableLen=NullTable::calcTableSize(nullCount);
+    fields_[sys_field_num_] = FieldMeta(
+      attr_type_to_string(AttrType::NULLTYPE),AttrType::NULLTYPE,field_offset,nullTableLen,false,false);
+    sys_field_num_++;
+    field_offset+=nullTableLen;
+  }
+
+  // 处理字段表头
   for (int i = 0; i < field_num; i++) {
     const AttrInfoSqlNode &attr_info = attributes[i];
-    rc = fields_[i + trx_field_num].init(attr_info.name.c_str(), 
-            attr_info.type, field_offset, attr_info.length, true/*visible*/);
+    rc = fields_[i + sys_field_num_].init(attr_info.name.c_str(), 
+            attr_info.type, field_offset, attr_info.length, true/*visible*/,attr_info.nullable);
     if (rc != RC::SUCCESS) {
       LOG_ERROR("Failed to init field meta. table name=%s, field name: %s", name, attr_info.name.c_str());
       return rc;
@@ -150,11 +174,7 @@ int TableMeta::field_num() const
 
 int TableMeta::sys_field_num() const
 {
-  const vector<FieldMeta> *trx_fields = TrxKit::instance()->trx_fields();
-  if (nullptr == trx_fields) {
-    return 0;
-  }
-  return static_cast<int>(trx_fields->size());
+  return sys_field_num_;
 }
 
 const IndexMeta *TableMeta::index(const char *name) const
@@ -198,6 +218,7 @@ int TableMeta::serialize(std::ostream &ss) const
   Json::Value table_value;
   table_value[FIELD_TABLE_ID]   = table_id_;
   table_value[FIELD_TABLE_NAME] = name_;
+  table_value[FIELD_SYS_FIELDS_NUM] = sys_field_num_;
 
   Json::Value fields_value;
   for (const FieldMeta &field : fields_) {
@@ -245,7 +266,14 @@ int TableMeta::deserialize(std::istream &is)
     return -1;
   }
 
+  const Json::Value &sys_field_num_value = table_value[FIELD_SYS_FIELDS_NUM];
+  if(!sys_field_num_value.isInt()){
+    LOG_ERROR("Invalid sys field num. json value=%s", sys_field_num_value.toStyledString().c_str());
+    return -1;
+  }
+
   int32_t table_id = table_id_value.asInt();
+  int32_t sys_field_num = sys_field_num_value.asInt();
 
   const Json::Value &table_name_value = table_value[FIELD_TABLE_NAME];
   if (!table_name_value.isString()) {
@@ -279,6 +307,7 @@ int TableMeta::deserialize(std::istream &is)
   std::sort(fields.begin(), fields.end(), comparator);
 
   table_id_ = table_id;
+  sys_field_num_=sys_field_num;
   name_.swap(table_name);
   fields_.swap(fields);
   record_size_ = fields_.back().offset() + fields_.back().len() - fields_.begin()->offset();
