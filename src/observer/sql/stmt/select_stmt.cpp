@@ -51,7 +51,8 @@ static RC dealWithWildcard(
       return RC::EMPTY;
     }
     Table* default_table=tables[0];
-    const FieldMeta* field_meta = default_table->table_meta().field(0);
+    const TableMeta &table_meta = default_table->table_meta();
+    const FieldMeta* field_meta = table_meta.field(table_meta.sys_field_num());
     if (nullptr == field_meta) {
       LOG_WARN("no such field, in expr resolving field=%s.%s", default_table->name(), relation_attr.attribute_name.c_str());
       return RC::SCHEMA_FIELD_MISSING;
@@ -78,7 +79,8 @@ static RC dealWithWildcard(
   if(relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
     std::unique_ptr<AggregateFunction> aggr = 
     AggregateFunctionFactory::CreateAggregateFunction(relation_attr.function_name);
-    const FieldMeta* field_meta = default_table->table_meta().field(0);
+    const TableMeta &table_meta = default_table->table_meta();
+    const FieldMeta* field_meta = table_meta.field(table_meta.sys_field_num());
     if (nullptr == field_meta) {
       LOG_WARN("no such field, in expr resolving field=%s.%s", default_table->name(), relation_attr.attribute_name.c_str());
       return RC::SCHEMA_FIELD_MISSING;
@@ -166,7 +168,8 @@ std::unique_ptr<Expression> makeArthExpr(
       if (common::is_blank(relation_attr.relation_name.c_str()) &&
         0 == strcmp(relation_attr.attribute_name.c_str(), "*")){
         if(relation_attr.function_name==FunctionName::AGGREGATE_COUNT){
-          field_meta = default_table->table_meta().field(0);
+          const TableMeta &table_meta = default_table->table_meta();
+          field_meta = table_meta.field(table_meta.sys_field_num());
         }else{
           rc=RC::INVALID_ARGUMENT;
           free(expr_attr);
