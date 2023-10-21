@@ -113,7 +113,8 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
 {
   RC rc = RC::SUCCESS;
 
-  if(left.attr_type()==AttrType::NULLTYPE||right.attr_type()==AttrType::NULLTYPE){
+  if((left.attr_type()==AttrType::NULLTYPE||right.attr_type()==AttrType::NULLTYPE)&&
+      (comp_!=NULL_OP && comp_!=NOT_NULL_OP)){
     result = false;
     return rc;
   }
@@ -124,6 +125,12 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
   }
   else if(comp_ == NOT_LIKE_OP){
     result = !left.like(right);
+  }
+  else if(comp_ == NULL_OP){
+    result = left.attr_type()==AttrType::NULLTYPE;
+  }
+  else if(comp_ == NOT_NULL_OP){
+    result = left.attr_type()!=AttrType::NULLTYPE; 
   }
   else
   {

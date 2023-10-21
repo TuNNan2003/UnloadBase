@@ -114,6 +114,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         NOT
         AS
         NULL_T
+        IS
 
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
@@ -927,6 +928,24 @@ condition:
 
       delete $1;
       delete $3;
+    }
+    | attr_meta IS NULL_T{
+      $$ = new ConditionSqlNode;
+      $$->left_is_attr = 1;
+      $$->left_attr = *$1;
+      $$->right_is_attr = 0;
+      $$->right_value = Value(AttrType::NULLTYPE);
+      $$->comp = NULL_OP;
+      delete $1;
+    }
+    | attr_meta IS NOT NULL_T{
+      $$ = new ConditionSqlNode;
+      $$->left_is_attr = 1;
+      $$->left_attr = *$1;
+      $$->right_is_attr = 0;
+      $$->right_value = Value(AttrType::NULLTYPE);
+      $$->comp = NOT_NULL_OP;
+      delete $1;
     }
     ;
 join_tables:
