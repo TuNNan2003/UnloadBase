@@ -115,6 +115,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         AS
         NULL_T
         IS
+        UNIQUE
 
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
@@ -137,6 +138,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   std::vector<ConditionSqlNode> *   condition_list;
   std::vector<ExpressionSqlNode*>*  rel_attr_list;
   std::vector<std::string> *        relation_list;
+  std::vector<std::string> *        id_meta_list;
   std::vector<std::vector<Value>>* tuple_list;
   char *                            string;
   int                               number;
@@ -164,6 +166,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <attr_infos>          attr_def_list
 %type <attr_info>           attr_def
 %type <value_list>          value_list
+%type <id_meta_list>        id_meta_list
 %type <condition_list>      where
 %type <set_list>            set_variable_stmt
 %type <condition_list>      on
@@ -293,16 +296,42 @@ desc_table_stmt:
     ;
 
 create_index_stmt:    /*create index 语句的语法解析树*/
-    CREATE INDEX ID ON ID LBRACE ID RBRACE
+    CREATE INDEX ID ON ID LBRACE id_meta_list RBRACE
     {
       $$ = new ParsedSqlNode(SCF_CREATE_INDEX);
       CreateIndexSqlNode &create_index = $$->create_index;
       create_index.index_name = $3;
       create_index.relation_name = $5;
-      create_index.attribute_name = $7;
+      create_index.attribute_name = $7->at(0);
       free($3);
       free($5);
-      free($7);
+      delete $7;
+    }
+    |
+    CREATE UNIQUE INDEX ID ON ID LBRACE id_meta_list RBRACE
+    {
+      $$ = new ParsedSqlNode(SCF_CREATE_INDEX);
+      CreateIndexSqlNode &create_index = $$->create_index;
+      create_index.index_name = $4;
+      create_index.relation_name = $6;
+      create_index.attribute_name = $8->at(0);
+      create_index.uniqueFlag = true;
+      free($4);
+      free($6);
+      delete $8;
+    }
+    ;
+
+id_meta_list:
+    ID {
+      $$ = new std::vector<std::string>;
+      $$->emplace_back($1);
+      free($1);
+    }
+    | id_meta_list COMMA ID{
+      $$ = $1;
+      $$ -> emplace_back($3);
+      free($3);
     }
     ;
 
