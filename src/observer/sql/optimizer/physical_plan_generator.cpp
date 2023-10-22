@@ -37,6 +37,8 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/expression.h"
 #include "common/log/log.h"
 
+#define DELETENOINDEX
+
 using namespace std;
 
 RC PhysicalPlanGenerator::create(LogicalOperator &logical_operator, unique_ptr<PhysicalOperator> &oper)
@@ -216,6 +218,16 @@ RC PhysicalPlanGenerator::create_plan(InsertLogicalOperator &insert_oper, unique
   return RC::SUCCESS;
 }
 
+RC createTableScanWithTableGet(TableGetLogicalOperator &table_get_oper, unique_ptr<PhysicalOperator> &oper){
+    Table *table = table_get_oper.table();
+    vector<unique_ptr<Expression>> &predicates = table_get_oper.predicates();
+    auto table_scan_oper = new TableScanPhysicalOperator(table, table_get_oper.readonly());
+    table_scan_oper->set_predicates(std::move(predicates));
+    oper=unique_ptr<PhysicalOperator>(table_scan_oper);
+    LOG_TRACE("use table scan");
+    return RC::SUCCESS;
+}
+
 RC PhysicalPlanGenerator::create_plan(DeleteLogicalOperator &delete_oper, unique_ptr<PhysicalOperator> &oper)
 {
   vector<unique_ptr<LogicalOperator>> &child_opers = delete_oper.children();
@@ -225,7 +237,20 @@ RC PhysicalPlanGenerator::create_plan(DeleteLogicalOperator &delete_oper, unique
   RC rc = RC::SUCCESS;
   if (!child_opers.empty()) {
     LogicalOperator *child_oper = child_opers.front().get();
+
+    // 当前索引删除存在只删除一条的问题，这里对删除操作退化为table scan
+    #ifdef DELETENOINDEX
+    if(child_oper->type()==LogicalOperatorType::TABLE_GET){
+      rc=createTableScanWithTableGet(static_cast<TableGetLogicalOperator &>(*child_oper), child_physical_oper);
+    }else{
+      rc = create(*child_oper, child_physical_oper);
+    }
+    #endif
+
+    #ifndef DELETENOINDEX
     rc = create(*child_oper, child_physical_oper);
+    #endif
+
     if (rc != RC::SUCCESS) {
       LOG_WARN("failed to create physical operator. rc=%s", strrc(rc));
       return rc;
