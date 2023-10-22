@@ -1924,7 +1924,7 @@ yyreduce:
       CreateIndexSqlNode &create_index = (yyval.sql_node)->create_index;
       create_index.index_name = (yyvsp[-5].string);
       create_index.relation_name = (yyvsp[-3].string);
-      create_index.attribute_name = (yyvsp[-1].id_meta_list)->at(0);
+      create_index.attribute_name.swap(*(yyvsp[-1].id_meta_list));
       free((yyvsp[-5].string));
       free((yyvsp[-3].string));
       delete (yyvsp[-1].id_meta_list);
@@ -1939,7 +1939,7 @@ yyreduce:
       CreateIndexSqlNode &create_index = (yyval.sql_node)->create_index;
       create_index.index_name = (yyvsp[-5].string);
       create_index.relation_name = (yyvsp[-3].string);
-      create_index.attribute_name = (yyvsp[-1].id_meta_list)->at(0);
+      create_index.attribute_name.swap(*(yyvsp[-1].id_meta_list));
       create_index.uniqueFlag = true;
       free((yyvsp[-5].string));
       free((yyvsp[-3].string));

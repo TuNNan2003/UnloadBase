@@ -302,7 +302,7 @@ create_index_stmt:    /*create index 语句的语法解析树*/
       CreateIndexSqlNode &create_index = $$->create_index;
       create_index.index_name = $3;
       create_index.relation_name = $5;
-      create_index.attribute_name = $7->at(0);
+      create_index.attribute_name.swap(*$7);
       free($3);
       free($5);
       delete $7;
@@ -314,7 +314,7 @@ create_index_stmt:    /*create index 语句的语法解析树*/
       CreateIndexSqlNode &create_index = $$->create_index;
       create_index.index_name = $4;
       create_index.relation_name = $6;
-      create_index.attribute_name = $8->at(0);
+      create_index.attribute_name.swap(*$8);
       create_index.uniqueFlag = true;
       free($4);
       free($6);
