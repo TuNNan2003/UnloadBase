@@ -31,7 +31,8 @@ static const Json::StaticString FIELD_INDEXES("indexes");
 static const Json::StaticString FIELD_SYS_FIELDS_NUM("sys_fields_num");
 
 TableMeta::TableMeta(const TableMeta &other)
-    : name_(other.name_), fields_(other.fields_), indexes_(other.indexes_), record_size_(other.record_size_)
+    : name_(other.name_), fields_(other.fields_), indexes_(other.indexes_), 
+    record_size_(other.record_size_),sys_field_num_(other.sys_field_num_)
 {}
 
 void TableMeta::swap(TableMeta &other) noexcept
@@ -39,6 +40,7 @@ void TableMeta::swap(TableMeta &other) noexcept
   name_.swap(other.name_);
   fields_.swap(other.fields_);
   indexes_.swap(other.indexes_);
+  std::swap(sys_field_num_, other.sys_field_num_);
   std::swap(record_size_, other.record_size_);
 }
 
