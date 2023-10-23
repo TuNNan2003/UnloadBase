@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 #include <sstream>
 #include <functional>
 #include <memory>
+#include <thread>
 
 #include "storage/record/record_manager.h"
 #include "storage/buffer/disk_buffer_pool.h"
@@ -565,6 +566,9 @@ protected:
 private:
   common::MemPoolItem::unique_ptr make_key(const char *user_key, const RID &rid);
   void free_key(char *key);
+  void increaseDelNum();
+  void resetDelNum();
+  int delNum();
 
 protected:
   DiskBufferPool *disk_buffer_pool_ = nullptr;
@@ -579,6 +583,8 @@ protected:
   KeyPrinter      key_printer_;
 
   std::unique_ptr<common::MemPoolItem> mem_pool_item_;
+
+  thread_local static int delNum_;
 
 private:
   friend class BplusTreeScanner;

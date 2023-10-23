@@ -37,8 +37,6 @@ See the Mulan PSL v2 for more details. */
 #include "sql/expr/expression.h"
 #include "common/log/log.h"
 
-#define DELETENOINDEX
-
 using namespace std;
 
 RC PhysicalPlanGenerator::create(LogicalOperator &logical_operator, unique_ptr<PhysicalOperator> &oper)
@@ -261,7 +259,7 @@ RC PhysicalPlanGenerator::create_plan(DeleteLogicalOperator &delete_oper, unique
     LogicalOperator *child_oper = child_opers.front().get();
     LOG_DEBUG("logical type is %d",child_oper->type());
 
-    // 当前索引删除存在只删除一条的问题，这里对删除操作退化为table scan
+    // 对删除操作退化为table scan, 当索引操作出现问题时的备用编译选项, 一般情况请勿打开
     #ifdef DELETENOINDEX
     if(child_oper->type()==LogicalOperatorType::TABLE_GET){
       rc=createTableScanWithTableGet(static_cast<TableGetLogicalOperator &>(*child_oper), child_physical_oper);

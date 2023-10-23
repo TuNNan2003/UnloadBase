@@ -726,6 +726,8 @@ bool InternalIndexNodeHandler::validate(const KeyComparator &comparator, DiskBuf
 
 /////////////////////////////////////////////////////////////////////////////////
 
+thread_local int BplusTreeHandler::delNum_=0;
+
 RC BplusTreeHandler::sync()
 {
   return disk_buffer_pool_->flush_all_pages();
@@ -1628,7 +1630,21 @@ RC BplusTreeHandler::delete_entry(const char *user_key, const RID *rid)
     return rc;
   }
 
+  increaseDelNum();
+
   return delete_entry_internal(latch_memo, leaf_frame, key);
+}
+
+void BplusTreeHandler::increaseDelNum(){
+  delNum_++;
+}
+
+void BplusTreeHandler::resetDelNum(){
+  delNum_=0;
+}
+
+int BplusTreeHandler::delNum(){
+  return delNum_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1805,7 +1821,14 @@ RC BplusTreeScanner::next_entry(RID &rid)
     return RC::SUCCESS;
   }
 
+  // iter_index_直接自增仅适用于索引在查询过程中不变的情况，删除过程中索引需要发生变化
   iter_index_++;
+  if(iter_index_<tree_handler_.delNum()){
+    LOG_WARN("delete B puls tree entry more than scanned");
+    return RC::RECORD_EOF;
+  }
+  iter_index_-=tree_handler_.delNum();
+  tree_handler_.resetDelNum();
 
   LeafIndexNodeHandler node(tree_handler_.file_header_, current_frame_);
   if (iter_index_ < node.size()) {
