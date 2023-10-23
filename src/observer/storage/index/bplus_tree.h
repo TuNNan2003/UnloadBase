@@ -574,6 +574,8 @@ protected:
   DiskBufferPool *disk_buffer_pool_ = nullptr;
   bool            header_dirty_ = false; // 
   IndexFileHeader file_header_;
+  // 文件头数据是拷贝的，这里保存原始数据的指针
+  char* headerData;
 
   // 在调整根节点时，需要加上这个锁。
   // 这个锁可以使用递归读写锁，但是这里偷懒先不改

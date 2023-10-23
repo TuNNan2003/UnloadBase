@@ -730,6 +730,12 @@ thread_local int BplusTreeHandler::delNum_=0;
 
 RC BplusTreeHandler::sync()
 {
+  // 同步前需要将文件头数据也同步回来
+  if(headerData!=nullptr){
+    memcpy(headerData,&file_header_,sizeof(file_header_));
+  }else{
+    LOG_DEBUG("syncing file header, but not header data to set back");
+  }
   return disk_buffer_pool_->flush_all_pages();
 }
 
@@ -786,7 +792,8 @@ RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_
   header_frame->mark_dirty();
 
   disk_buffer_pool_ = bp;
-
+  
+  headerData=pdata;
   memcpy(&file_header_, pdata, sizeof(file_header_));
   header_dirty_ = false;
   bp->unpin_page(header_frame);
@@ -828,6 +835,7 @@ RC BplusTreeHandler::open(const char *file_name)
   }
 
   char *pdata = frame->data();
+  headerData=pdata;
   memcpy(&file_header_, pdata, sizeof(IndexFileHeader));
   header_dirty_ = false;
   disk_buffer_pool_ = disk_buffer_pool;
