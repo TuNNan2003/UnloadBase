@@ -427,10 +427,11 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
 
   }
 
-  // 设置null表
+  // 设置null表(当存在null表field的时候)
   const FieldMeta *nullTableMeta =table_meta_.field(attr_type_to_string(AttrType::NULLTYPE));
-  memcpy(record_data + nullTableMeta->offset(), nullTable.toBytes(), nullTableMeta->len());
-
+  if(nullTableMeta!=nullptr){
+    memcpy(record_data + nullTableMeta->offset(), nullTable.toBytes(), nullTableMeta->len());
+  }
   record.set_data_owner(record_data, record_size);
   return RC::SUCCESS;
 }
