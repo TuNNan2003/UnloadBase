@@ -139,6 +139,13 @@ class RowTuple : public Tuple
 {
 public:
   RowTuple() = default;
+
+  RowTuple(const RowTuple& rowtuple){
+    *record_ = *(rowtuple.record_);
+    table_ = rowtuple.table_;
+    speces_ = rowtuple.speces_;
+  }
+
   virtual ~RowTuple()
   {
     for (FieldExpr *spec : speces_) {

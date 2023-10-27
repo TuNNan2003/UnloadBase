@@ -25,34 +25,69 @@ PredicatePhysicalOperator::PredicatePhysicalOperator(std::unique_ptr<Expression>
 
 RC PredicatePhysicalOperator::open(Trx *trx)
 {
-  if (children_.size() != 1) {
-    LOG_WARN("predicate operator must has one child");
-    return RC::INTERNAL;
+  RC rc = RC::SUCCESS;
+  for (int i = 0; i < children_.size(); i++)
+  {
+    PhysicalOperator *child = children_[i].get();
+    rc = child->open(trx);
+    if (rc != RC::SUCCESS)
+    {
+      return rc;
+    }
   }
-
-  return children_[0]->open(trx);
+  return RC::SUCCESS;
 }
 
 RC PredicatePhysicalOperator::next()
 {
   RC rc = RC::SUCCESS;
-  PhysicalOperator *oper = children_.front().get();
+  PhysicalOperator *oper = children_.back().get();
+  if (subquery_result_.size() == 0 && children_.size() > 1)
+  {
+    for (int i = 0; i < children_.size() - 1; i++)
+    {
+      std::vector<Value> subquery_result;
+      while (RC::SUCCESS == (rc = children_[i]->next()))
+      {
+        Tuple *tuple = children_[i]->current_tuple();
+        RowTuple *row_tuple = static_cast<RowTuple *>(tuple);
+        for(int j = 0; j < row_tuple->cell_num(); j++){
+          Value tmp_value;
+          row_tuple->cell_at(j, tmp_value);
+          subquery_result.emplace_back(tmp_value);
+        }
+      }
+      subquery_result_.emplace_back(subquery_result);
+    }
+  }
 
-  while (RC::SUCCESS == (rc = oper->next())) {
+  while (RC::SUCCESS == (rc = oper->next()))
+  {
     Tuple *tuple = oper->current_tuple();
-    if (nullptr == tuple) {
+    if (nullptr == tuple)
+    {
       rc = RC::INTERNAL;
       LOG_WARN("failed to get tuple from operator");
       break;
     }
 
     Value value;
-    rc = expression_->get_value(*tuple, value);
-    if (rc != RC::SUCCESS) {
+    if (children_.size() > 1)
+    {
+      SubqueryExpr *conj_expr = static_cast<SubqueryExpr *>(expression_.get());
+      rc = conj_expr->get_value_withsubquery(*tuple, value, subquery_result_.at(0));
+    }
+    else
+    {
+      rc = expression_->get_value(*tuple, value);
+    }
+    if (rc != RC::SUCCESS)
+    {
       return rc;
     }
 
-    if (value.get_boolean()) {
+    if (value.get_boolean())
+    {
       return rc;
     }
   }
@@ -67,5 +102,5 @@ RC PredicatePhysicalOperator::close()
 
 Tuple *PredicatePhysicalOperator::current_tuple()
 {
-  return children_[0]->current_tuple();
+  return children_.back()->current_tuple();
 }

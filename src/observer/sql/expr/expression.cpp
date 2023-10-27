@@ -19,18 +19,19 @@ using namespace std;
 
 RC FieldExpr::get_value(const Tuple &tuple, Value &value) const
 {
-  RC rc=tuple.find_cell(TupleCellSpec(table_name(), field_name()), value);
-  if(rc!=RC::SUCCESS || funcName_==NULLFUNC){
+  RC rc = tuple.find_cell(TupleCellSpec(table_name(), field_name()), value);
+  if (rc != RC::SUCCESS || funcName_ == NULLFUNC)
+  {
     return rc;
   }
-  SQLFunction::calc(value,funcName_,param_);
+  SQLFunction::calc(value, funcName_, param_);
   // 计算回调内容
-  if(this->aggr_!=nullptr){
+  if (this->aggr_ != nullptr)
+  {
     this->aggr_->calc(value);
     this->aggr_->set(value);
   }
   return rc;
-
 }
 
 RC ValueExpr::get_value(const Tuple &tuple, Value &value) const
@@ -108,7 +109,6 @@ ComparisonExpr::~ComparisonExpr()
 {
 }
 
-
 RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &result) const
 {
   RC rc = RC::SUCCESS;
@@ -123,7 +123,8 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
   {
     result = left.like(right);
   }
-  else if(comp_ == NOT_LIKE_OP){
+  else if (comp_ == NOT_LIKE_OP)
+  {
     result = !left.like(right);
   }
   else if(comp_ == NULL_OP){
@@ -230,6 +231,60 @@ RC ComparisonExpr::get_value(const Tuple &tuple, Value &value) const
     value.set_boolean(bool_value);
   }
   return rc;
+}
+
+SubqueryExpr::SubqueryExpr(SubQueryOp subqueryop, unique_ptr<Expression> left) : subqueryop_(subqueryop), left_(std::move(left))
+{
+}
+
+SubqueryExpr::~SubqueryExpr()
+{
+}
+
+RC SubqueryExpr::get_value(const Tuple &tuple, Value &value) const
+{
+  value.set_boolean(0);
+  return RC::SUCCESS;
+}
+
+RC SubqueryExpr::get_value_withsubquery(Tuple &tuple, Value &value, std::vector<Value> subquery_result)
+{
+  RC rc = RC::SUCCESS;
+  switch (subqueryop_)
+  {
+  case SubQueryOp::IN_SUB:
+  {
+    rc = get_IN_value(tuple, value, subquery_result);
+  }
+  break;
+  case SubQueryOp::NOT_IN:
+  {
+  }
+  }
+  return rc;
+}
+
+RC SubqueryExpr::get_IN_value(Tuple &tuple, Value &bool_result, std::vector<Value> subquery_result)
+{
+  FieldExpr *left = static_cast<FieldExpr *>(left_.get());
+  std::string attribute_name(left->field_name());
+  RowTuple &row_tuple = static_cast<RowTuple &>(tuple);
+  if (left_index_ == 0)
+  {
+    left_index_ = row_tuple.locate_index(attribute_name);
+  }
+  Value value;
+  row_tuple.cell_at(left_index_, value);
+  for (int i = 0; i < subquery_result.size(); i++)
+  {
+    if (value.compare(subquery_result.at(i)) == 0)
+    {
+      bool_result.set_boolean(true);
+      return RC::SUCCESS;
+    }
+  }
+  bool_result.set_boolean(false);
+  return RC::SUCCESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

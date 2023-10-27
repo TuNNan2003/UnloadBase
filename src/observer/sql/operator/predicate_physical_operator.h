@@ -44,4 +44,5 @@ public:
 
 private:
   std::unique_ptr<Expression> expression_;
+  std::vector<std::vector<Value> > subquery_result_;
 };

@@ -19,12 +19,13 @@ See the Mulan PSL v2 for more details. */
 #include "sql/parser/parse_defs.h"
 #include "sql/stmt/stmt.h"
 #include "sql/expr/expression.h"
+#include "sql/stmt/select_stmt.h"
 
 class Db;
 class Table;
 class FieldMeta;
 
-struct FilterObj 
+struct FilterObj
 {
   bool is_attr;
   Field field;
@@ -43,13 +44,72 @@ struct FilterObj
   }
 };
 
-class FilterUnit 
+class FilterUnit
 {
 public:
   FilterUnit() = default;
   ~FilterUnit()
-  {}
+  {
+  }
 
+  virtual WhereType type() const = 0;
+private:
+};
+
+class SubQueryFilterUnit : public FilterUnit
+{
+public:
+  SubQueryFilterUnit() = default;
+  ~SubQueryFilterUnit() {}
+
+  void set_queryop(SubQueryOp queryop)
+  {
+    subqueryop_ = queryop;
+  }
+
+  Stmt *get_stmt()
+  {
+    return select_stmt_;
+  }
+
+  void set_stmt(Stmt* stmt){
+    select_stmt_ = static_cast<SelectStmt*>(stmt);
+  }
+
+  void set_left(const FilterObj &obj)
+  {
+    left_ = obj;
+  }
+
+  const FilterObj &left() const
+  {
+    return left_;
+  }
+
+  SelectStmt* subquery() const {
+    return select_stmt_;
+  }
+
+  SubQueryOp subqueryop() const {
+    return subqueryop_;
+  }
+
+  WhereType type() const override
+  {
+  return WhereType::SimpleSubQuery;
+  }
+
+private:
+  FilterObj left_;
+  SubQueryOp subqueryop_ = NO_SUB;
+  SelectStmt *select_stmt_ = nullptr;
+};
+
+class ConditionFilterUnit : public FilterUnit
+{
+public:
+  ConditionFilterUnit() = default;
+  ~ConditionFilterUnit() {}
   void set_comp(CompOp comp)
   {
     comp_ = comp;
@@ -59,7 +119,6 @@ public:
   {
     return comp_;
   }
-
   void set_left(const FilterObj &obj)
   {
     left_ = obj;
@@ -78,6 +137,10 @@ public:
     return right_;
   }
 
+  WhereType type() const override
+  {
+    return WhereType::Condition;
+  }
 private:
   CompOp comp_ = NO_OP;
   FilterObj left_;
@@ -88,7 +151,7 @@ private:
  * @brief Filter/谓词/过滤语句
  * @ingroup Statement
  */
-class FilterStmt 
+class FilterStmt
 {
 public:
   FilterStmt() = default;
@@ -102,11 +165,14 @@ public:
 
 public:
   static RC create(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-      const ConditionSqlNode *conditions, int condition_num, FilterStmt *&stmt);
+                   const ConditionSqlNode *conditions, int condition_num, FilterStmt *&stmt);
 
-  static RC create_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-      const ConditionSqlNode &condition, FilterUnit *&filter_unit);
+  static RC create_condition_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
+                               const ConditionSqlNode &condition, FilterUnit *&filter_unit);
+
+  static RC create_subquery_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
+                               const SubQuerySqlNode &condition, FilterUnit *&filter_unit);
 
 private:
-  std::vector<FilterUnit *> filter_units_;  // 默认当前都是AND关系
+  std::vector<FilterUnit *> filter_units_; // 默认当前都是AND关系
 };

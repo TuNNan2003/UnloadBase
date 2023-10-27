@@ -116,14 +116,19 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         NULL_T
         IS
         UNIQUE
+        IN
+        ALL
+        SOME
 
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
 %union {
   ParsedSqlNode *                   sql_node;
   ConditionSqlNode *                condition;
+  ConditionSqlNode *                subquery;
   SetVariableSqlNode *              set_eq;
   Value *                           value;
+  enum SubQueryOp                   subqueryop;
   enum CompOp                       comp;
   ExpressionSqlNode *               rel_attr;
   ExpressionSqlNode *               complex_value;
@@ -156,10 +161,12 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 /** type 定义了各种解析后的结果输出的是什么类型。类型对应了 union 中的定义的成员变量名称 **/
 %type <number>              type
 %type <condition>           condition
+%type <subquery>            subquery
 %type <set_eq>              set_eq
 %type <value>               value
 %type <number>              number
 %type <comp>                comp_op
+%type <subqueryop>          subquery_op
 %type <rel_attr>            rel_attr
 %type <attr_meta>           attr_meta
 %type <id_meta>             id_meta
@@ -908,6 +915,28 @@ condition_list:
       $$->emplace_back(*$1);
       delete $1;
     }
+    | subquery {
+      $$ = new std::vector<ConditionSqlNode>;
+      $$->emplace_back(*$1);
+      delete $1;
+    }
+    | subquery AND condition_list {
+      $$ = $3;
+      $$->emplace_back(*$1);
+      delete $1;
+    }
+    ;
+subquery:
+    attr_meta subquery_op LBRACE select_stmt RBRACE
+    {
+      $$ = new ConditionSqlNode;
+      $$->subquery = new SubQuerySqlNode;
+      $$->subquery->left_attr = *$1;
+      $$->subquery->queryOP = $2;
+      $$->subquery->sub_query = $4;
+
+      delete $1;
+    } 
     ;
 condition:
     attr_meta comp_op value
@@ -918,7 +947,7 @@ condition:
       $$->right_is_attr = 0;
       $$->right_value = *$3;
       $$->comp = $2;
-
+      $$->subquery = NULL;
       delete $1;
       delete $3;
     }
@@ -930,6 +959,7 @@ condition:
       $$->right_is_attr = 0;
       $$->right_value = *$3;
       $$->comp = $2;
+      $$->subquery = NULL;
 
       delete $1;
       delete $3;
@@ -942,6 +972,7 @@ condition:
       $$->right_is_attr = 1;
       $$->right_attr = *$3;
       $$->comp = $2;
+      $$->subquery = NULL;
 
       delete $1;
       delete $3;
@@ -954,6 +985,7 @@ condition:
       $$->right_is_attr = 1;
       $$->right_attr = *$3;
       $$->comp = $2;
+      $$->subquery = NULL;
 
       delete $1;
       delete $3;
@@ -1034,6 +1066,17 @@ comp_op:
     | NE { $$ = NOT_EQUAL; }
     | LIKE { $$ =  LIKE_OP; }
     | NOT LIKE  {$$ = NOT_LIKE_OP;}
+    ;
+
+subquery_op:
+      IN      { $$ = IN_SUB; }
+    | NOT IN    { $$ = NOT_IN; }
+    | EQ SOME { $$ = EQ_SOME;}
+    | EQ ALL  { $$ = EQ_ALL; }
+    | GT SOME { $$ = GREAT_SOME; }
+    | GT ALL  { $$ = GREAT_ALL;  }
+    | LT SOME  { $$ = LESS_SOME;  }
+    | LT ALL   { $$ = LESS_ALL;   }
     ;
 
 load_data_stmt:

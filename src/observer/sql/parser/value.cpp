@@ -255,7 +255,7 @@ int Value::compare(const Value &other) const
     float str2Float=TypeCast::castStr2Float(other.str_value_.c_str());
     return common::compare_float((void *)&this->num_value_.float_value_,(void *)&str2Float);
   }
-  LOG_WARN("not supported");
+  LOG_WARN("not supported %d, %d", this->attr_type_, other.attr_type_);
   return -1;  // TODO return rc?
 }
 
