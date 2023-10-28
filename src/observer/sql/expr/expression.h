@@ -290,7 +290,7 @@ public:
 private:
   SubQueryOp subqueryop_;
   std::unique_ptr<Expression> left_;
-  int left_index_;
+  int left_index_=-1;
   std::vector<std::unique_ptr<Expression>> right_;
 };
 

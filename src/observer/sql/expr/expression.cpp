@@ -272,7 +272,7 @@ RC SubqueryExpr::get_IN_value(Tuple &tuple, Value &bool_result, std::vector<Valu
   FieldExpr *left = static_cast<FieldExpr *>(left_.get());
   std::string attribute_name(left->field_name());
   RowTuple &row_tuple = static_cast<RowTuple &>(tuple);
-  if (left_index_ == 0)
+  if (left_index_ == -1)
   {
     left_index_ = row_tuple.locate_index(attribute_name);
   }
