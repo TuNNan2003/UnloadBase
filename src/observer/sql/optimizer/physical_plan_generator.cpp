@@ -199,7 +199,6 @@ RC PhysicalPlanGenerator::create_plan(PredicateLogicalOperator &pred_oper, uniqu
 
   for (int i = 0; i < children_opers.size(); i++)
   {
-    // TODO: problems here
     unique_ptr<PhysicalOperator> child_phy_oper;
     switch (children_opers.at(i)->type())
     {
@@ -217,6 +216,10 @@ RC PhysicalPlanGenerator::create_plan(PredicateLogicalOperator &pred_oper, uniqu
 
       rc = create_plan(*proj_child_oper, child_phy_oper);
     }break;
+    default:{
+      // Program shouldn't reach here
+      break;
+    }
     }
     if (rc != RC::SUCCESS)
     {

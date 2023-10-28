@@ -252,14 +252,17 @@ RC SubqueryExpr::get_value_withsubquery(Tuple &tuple, Value &value, std::vector<
   RC rc = RC::SUCCESS;
   switch (subqueryop_)
   {
-  case SubQueryOp::IN_SUB:
-  {
-    rc = get_IN_value(tuple, value, subquery_result);
-  }
-  break;
-  case SubQueryOp::NOT_IN:
-  {
-  }
+    case SubQueryOp::IN_SUB:
+    {
+      rc = get_IN_value(tuple, value, subquery_result);
+    }
+    break;
+    case SubQueryOp::NOT_IN:
+    {
+    }break;
+    default:{
+      break;
+    }
   }
   return rc;
 }

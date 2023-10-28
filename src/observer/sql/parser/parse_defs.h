@@ -112,6 +112,30 @@ enum class WhereType
   NO_Type,
 };
 
+
+/**
+ * @brief 表示一个条件比较
+ * @ingroup SQLParser
+ * @details 条件比较就是SQL查询中的 where a>b 这种。
+ * 一个条件比较是有两部分组成的，称为左边和右边。
+ * 左边和右边理论上都可以是任意的数据，比如是字段（属性，列），也可以是数值常量。
+ * 这个结构中记录的仅仅支持字段和值。
+ */
+struct ConditionSqlNode
+{
+  int               left_is_attr;    ///< TRUE if left-hand side is an attribute
+                                   ///< 1时，操作符左边是属性名，0时，是属性值
+  Value             left_value;      ///< left-hand side value if left_is_attr = FALSE
+  RelAttrSqlNode    left_attr;       ///< left-hand side attribute
+  CompOp            comp;            ///< comparison operator
+  int               right_is_attr;   ///< TRUE if right-hand side is an attribute
+                                   ///< 1时，操作符右边是属性名，0时，是属性值
+  RelAttrSqlNode    right_attr;      ///< right-hand side attribute if right_is_attr = TRUE 右边的属性
+  Value             right_value;     ///< right-hand side value if right_is_attr = FALSE
+  SubQuerySqlNode*  subquery;        ///< subquery 
+};
+
+
 /**
  * @brief 表示一个字段表达式
  * @ingroup SQLParser

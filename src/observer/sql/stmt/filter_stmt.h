@@ -48,7 +48,7 @@ class FilterUnit
 {
 public:
   FilterUnit() = default;
-  ~FilterUnit()
+  virtual ~FilterUnit()
   {
   }
 

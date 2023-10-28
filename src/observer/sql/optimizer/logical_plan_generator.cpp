@@ -212,6 +212,9 @@ RC LogicalPlanGenerator::create_plan(
       cmp_exprs_size++;
     }
     break;
+    default:{
+      break;
+    }
     }
   }
 
