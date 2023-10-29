@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/filter_stmt.h"
 #include "storage/db/db.h"
 #include "storage/table/table.h"
+#include "expr_factory.h"
 
 FilterStmt::~FilterStmt()
 {
@@ -29,7 +30,7 @@ FilterStmt::~FilterStmt()
 }
 
 RC FilterStmt::create(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                      const ConditionSqlNode *conditions, int condition_num, FilterStmt *&stmt)
+                      ConditionSqlNode *conditions, int condition_num, FilterStmt *&stmt)
 {
   RC rc = RC::SUCCESS;
   stmt = nullptr;
@@ -57,44 +58,9 @@ RC FilterStmt::create(Db *db, Table *default_table, std::unordered_map<std::stri
   return rc;
 }
 
-RC get_table_and_field(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                       const RelAttrSqlNode &attr, Table *&table, const FieldMeta *&field)
-{
-  if (common::is_blank(attr.relation_name.c_str()))
-  {
-    table = default_table;
-  }
-  else if (nullptr != tables)
-  {
-    auto iter = tables->find(attr.relation_name);
-    if (iter != tables->end())
-    {
-      table = iter->second;
-    }
-  }
-  else
-  {
-    table = db->find_table(attr.relation_name.c_str());
-  }
-  if (nullptr == table)
-  {
-    LOG_WARN("No such table: attr.relation_name: %s", attr.relation_name.c_str());
-    return RC::SCHEMA_TABLE_NOT_EXIST;
-  }
-
-  field = table->table_meta().field(attr.attribute_name.c_str());
-  if (nullptr == field)
-  {
-    LOG_WARN("no such field in table: table %s, field %s", table->name(), attr.attribute_name.c_str());
-    table = nullptr;
-    return RC::SCHEMA_FIELD_NOT_EXIST;
-  }
-
-  return RC::SUCCESS;
-}
 
 RC FilterStmt::create_condition_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                                  const ConditionSqlNode &condition, FilterUnit *&filter_unit)
+                                  ConditionSqlNode &condition, FilterUnit *&filter_unit)
 {
   RC rc = RC::SUCCESS;
 
@@ -104,72 +70,30 @@ RC FilterStmt::create_condition_filter_unit(Db *db, Table *default_table, std::u
     LOG_WARN("invalid compare operator : %d", comp);
     return RC::INVALID_ARGUMENT;
   }
-
-  ConditionFilterUnit* condition_filter_unit = new ConditionFilterUnit;
-  AttrType left;
-  AttrType right;
-
-  if (condition.left_is_attr)
-  {
-    Table *table = nullptr;
-    const FieldMeta *field = nullptr;
-    rc = get_table_and_field(db, default_table, tables, condition.left_attr, table, field);
-    if (rc != RC::SUCCESS)
-    {
-      LOG_WARN("cannot find attr");
-      return rc;
-    }
-    FilterObj filter_obj;
-    filter_obj.init_attr(Field(table, field));
-    left = filter_obj.field.attr_type();
-    condition_filter_unit->set_left(filter_obj);
+  int funcType=0;
+  std::unique_ptr<Expression> left=makeArthExpr(condition.left,*tables,funcType,rc);
+  if(funcType==2||rc!=RC::SUCCESS){
+    LOG_WARN("aggregate function is not allowed here");
+    return RC::INVALID_ARGUMENT;
   }
-  else
-  {
-    FilterObj filter_obj;
-    filter_obj.init_value(condition.left_value);
-    left = filter_obj.value.attr_type();
-    condition_filter_unit->set_left(filter_obj);
+  funcType=0;
+  std::unique_ptr<Expression> right=makeArthExpr(condition.right,*tables,funcType,rc);
+  if(funcType==2||rc!=RC::SUCCESS){
+    LOG_WARN("aggregate function or contant value is not allowed here");
+    return RC::INVALID_ARGUMENT;
   }
 
-  if (condition.right_is_attr)
-  {
-    Table *table = nullptr;
-    const FieldMeta *field = nullptr;
-    rc = get_table_and_field(db, default_table, tables, condition.right_attr, table, field);
-    if (rc != RC::SUCCESS)
-    {
-      LOG_WARN("cannot find attr");
-      return rc;
-    }
-    FilterObj filter_obj;
-    filter_obj.init_attr(Field(table, field));
-    right = filter_obj.field.attr_type();
-    condition_filter_unit->set_right(filter_obj);
-  }
-  else
-  {
-    FilterObj filter_obj;
-    filter_obj.init_value(condition.right_value);
-    right = filter_obj.value.attr_type();
-    condition_filter_unit->set_right(filter_obj);
-  }
+  // 这里会移交表达式的所有权到过滤器单元中
+  ConditionFilterUnit* condition_filter_unit = new ConditionFilterUnit(left,right);
 
   condition_filter_unit->set_comp(comp);
-
-  // 检查两个类型是否能够比较
-  if (!Value::tryCompare(left, right))
-  {
-    rc = RC::VARIABLE_NOT_VALID;
-    LOG_DEBUG("unable to compare between %s and %s", attr_type_to_string(left), attr_type_to_string(right));
-  }
 
   filter_unit = static_cast<FilterUnit*>(condition_filter_unit);
   return rc;
 }
 
 RC FilterStmt::create_subquery_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                             const SubQuerySqlNode &condition, FilterUnit *&filter_unit)
+                             SubQuerySqlNode &condition, FilterUnit *&filter_unit)
 {
   RC rc = RC::SUCCESS;
 
@@ -179,18 +103,17 @@ RC FilterStmt::create_subquery_filter_unit(Db *db, Table *default_table, std::un
     return RC::INVALID_ARGUMENT;
   }
 
-  SubQueryFilterUnit* SQ_filter = new SubQueryFilterUnit;
+  int funcType=0;
+  std::unique_ptr<Expression> left=makeArthExpr(condition.attr,*tables,funcType,rc);
+  if(funcType!=1||rc!=RC::SUCCESS){
+    LOG_WARN("aggregate function or contant value is not allowed here");
+    return RC::INVALID_ARGUMENT;
+  }
+
+  SubQueryFilterUnit* SQ_filter = new SubQueryFilterUnit(left);
 
   Table* table = nullptr;
   const FieldMeta *field = nullptr;
-  rc = get_table_and_field(db, default_table, tables, condition.left_attr, table, field);
-  if(rc != RC::SUCCESS){
-    LOG_WARN("cannot find attr");
-    return rc;
-  }
-  FilterObj filter_obj;
-  filter_obj.init_attr(Field(table, field));
-  SQ_filter->set_left(filter_obj);
 
   SQ_filter->set_queryop(condition.queryOP);
   

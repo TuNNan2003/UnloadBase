@@ -927,106 +927,43 @@ condition_list:
     }
     ;
 subquery:
-    attr_meta subquery_op LBRACE select_stmt RBRACE
+    rel_attr subquery_op LBRACE select_stmt RBRACE
     {
       $$ = new ConditionSqlNode;
       $$->subquery = new SubQuerySqlNode;
-      $$->subquery->left_attr = *$1;
+      $$->subquery->attr = $1;
       $$->subquery->queryOP = $2;
       $$->subquery->sub_query = $4;
-
-      delete $1;
     } 
     ;
 condition:
-    attr_meta comp_op value
+    rel_attr comp_op rel_attr
     {
       $$ = new ConditionSqlNode;
-      $$->left_is_attr = 1;
-      $$->left_attr = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = *$3;
+      $$->left= $1;
       $$->comp = $2;
+      $$->right = $3;
       $$->subquery = NULL;
-      delete $1;
-      delete $3;
     }
-    | value comp_op value 
+    |
+    rel_attr IS NULL_T
     {
       $$ = new ConditionSqlNode;
-      $$->left_is_attr = 0;
-      $$->left_value = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = *$3;
-      $$->comp = $2;
-      $$->subquery = NULL;
-
-      delete $1;
-      delete $3;
-    }
-    | attr_meta comp_op attr_meta
-    {
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 1;
-      $$->left_attr = *$1;
-      $$->right_is_attr = 1;
-      $$->right_attr = *$3;
-      $$->comp = $2;
-      $$->subquery = NULL;
-
-      delete $1;
-      delete $3;
-    }
-    | value comp_op attr_meta
-    {
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 0;
-      $$->left_value = *$1;
-      $$->right_is_attr = 1;
-      $$->right_attr = *$3;
-      $$->comp = $2;
-      $$->subquery = NULL;
-
-      delete $1;
-      delete $3;
-    }
-    | attr_meta IS NULL_T{
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 1;
-      $$->left_attr = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = Value(AttrType::NULLTYPE);
+      $$->left= $1;
       $$->comp = NULL_OP;
-      delete $1;
+      $$->right->value=Value(AttrType::NULLTYPE);
+      $$->right->type=EXPRTYPE::VAL;
+      $$->subquery = NULL;
     }
-    | attr_meta IS NOT NULL_T{
+    |
+    rel_attr IS NOT NULL_T
+    {
       $$ = new ConditionSqlNode;
-      $$->left_is_attr = 1;
-      $$->left_attr = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = Value(AttrType::NULLTYPE);
+      $$->left= $1;
       $$->comp = NOT_NULL_OP;
-      delete $1;
-    }
-    | value IS NULL_T{
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 0;
-      $$->left_value = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = Value(AttrType::NULLTYPE);
-      $$->comp = NULL_OP;
-
-      delete $1;
-    }
-    | value IS NOT NULL_T{
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 0;
-      $$->left_value = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = Value(AttrType::NULLTYPE);
-      $$->comp = NOT_NULL_OP;
-
-      delete $1;
+      $$->right->value=Value(AttrType::NULLTYPE);
+      $$->right->type=EXPRTYPE::VAL;
+      $$->subquery = NULL;
     }
     ;
 join_tables:

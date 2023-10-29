@@ -57,68 +57,6 @@ RC DefaultConditionFilter::init(const ConDesc &left, const ConDesc &right, AttrT
   return RC::SUCCESS;
 }
 
-RC DefaultConditionFilter::init(Table &table, const ConditionSqlNode &condition)
-{
-  const TableMeta &table_meta = table.table_meta();
-  ConDesc left;
-  ConDesc right;
-
-  AttrType type_left = UNDEFINED;
-  AttrType type_right = UNDEFINED;
-
-  if (1 == condition.left_is_attr) {
-    left.is_attr = true;
-    const FieldMeta *field_left = table_meta.field(condition.left_attr.attribute_name.c_str());
-    if (nullptr == field_left) {
-      LOG_WARN("No such field in condition. %s.%s", table.name(), condition.left_attr.attribute_name.c_str());
-      return RC::SCHEMA_FIELD_MISSING;
-    }
-    left.attr_length = field_left->len();
-    left.attr_offset = field_left->offset();
-
-    type_left = field_left->type();
-  } else {
-    left.is_attr = false;
-    left.value = condition.left_value;  // 校验type 或者转换类型
-    type_left = condition.left_value.attr_type();
-
-    left.attr_length = 0;
-    left.attr_offset = 0;
-  }
-
-  if (1 == condition.right_is_attr) {
-    right.is_attr = true;
-    const FieldMeta *field_right = table_meta.field(condition.right_attr.attribute_name.c_str());
-    if (nullptr == field_right) {
-      LOG_WARN("No such field in condition. %s.%s", table.name(), condition.right_attr.attribute_name.c_str());
-      return RC::SCHEMA_FIELD_MISSING;
-    }
-    right.attr_length = field_right->len();
-    right.attr_offset = field_right->offset();
-    type_right = field_right->type();
-  } else {
-    right.is_attr = false;
-    right.value = condition.right_value;
-    type_right = condition.right_value.attr_type();
-
-    right.attr_length = 0;
-    right.attr_offset = 0;
-  }
-
-  // 校验和转换
-  //  if (!field_type_compare_compatible_table[type_left][type_right]) {
-  //    // 不能比较的两个字段， 要把信息传给客户端
-  //    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  //  }
-  // NOTE：这里没有实现不同类型的数据比较，比如整数跟浮点数之间的对比
-  // 但是选手们还是要实现。这个功能在预选赛中会出现
-  if (type_left != type_right) {
-    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  }
-
-  return init(left, right, type_left, condition.comp);
-}
-
 bool DefaultConditionFilter::filter(const Record &rec) const
 {
   Value left_value;
@@ -184,35 +122,6 @@ RC CompositeConditionFilter::init(const ConditionFilter *filters[], int filter_n
 RC CompositeConditionFilter::init(const ConditionFilter *filters[], int filter_num)
 {
   return init(filters, filter_num, false);
-}
-
-RC CompositeConditionFilter::init(Table &table, const ConditionSqlNode *conditions, int condition_num)
-{
-  if (condition_num == 0) {
-    return RC::SUCCESS;
-  }
-  if (conditions == nullptr) {
-    return RC::INVALID_ARGUMENT;
-  }
-
-  RC rc = RC::SUCCESS;
-  ConditionFilter **condition_filters = new ConditionFilter *[condition_num];
-  for (int i = 0; i < condition_num; i++) {
-    DefaultConditionFilter *default_condition_filter = new DefaultConditionFilter();
-    rc = default_condition_filter->init(table, conditions[i]);
-    if (rc != RC::SUCCESS) {
-      delete default_condition_filter;
-      for (int j = i - 1; j >= 0; j--) {
-        delete condition_filters[j];
-        condition_filters[j] = nullptr;
-      }
-      delete[] condition_filters;
-      condition_filters = nullptr;
-      return rc;
-    }
-    condition_filters[i] = default_condition_filter;
-  }
-  return init((const ConditionFilter **)condition_filters, condition_num, true);
 }
 
 bool CompositeConditionFilter::filter(const Record &rec) const

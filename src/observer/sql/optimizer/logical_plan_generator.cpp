@@ -165,25 +165,19 @@ RC LogicalPlanGenerator::create_plan(
   const std::vector<FilterUnit *> &filter_units = filter_stmt->filter_units();
   std::vector<unique_ptr<LogicalOperator>> sub_oper;
   int cmp_exprs_size = 0;
-  for (const FilterUnit *filter_unit : filter_units)
+  for (FilterUnit *filter_unit : filter_units)
   {
     switch (filter_unit->type())
     {
     case WhereType::Condition:
     {
-      const ConditionFilterUnit *condition_filter_unit = static_cast<const ConditionFilterUnit *>(filter_unit);
-      const FilterObj &filter_obj_left = condition_filter_unit->left();
-      const FilterObj &filter_obj_right = condition_filter_unit->right();
+      ConditionFilterUnit *condition_filter_unit = static_cast<ConditionFilterUnit *>(filter_unit);
+      FilterObj &filter_obj_left = condition_filter_unit->left();
+      FilterObj &filter_obj_right = condition_filter_unit->right();
 
-      unique_ptr<Expression> left(filter_obj_left.is_attr
-                                      ? static_cast<Expression *>(new FieldExpr(filter_obj_left.field))
-                                      : static_cast<Expression *>(new ValueExpr(filter_obj_left.value)));
-
-      unique_ptr<Expression> right(filter_obj_right.is_attr
-                                       ? static_cast<Expression *>(new FieldExpr(filter_obj_right.field))
-                                       : static_cast<Expression *>(new ValueExpr(filter_obj_right.value)));
-
-      ComparisonExpr *cmp_expr = new ComparisonExpr(condition_filter_unit->comp(), std::move(left), std::move(right));
+      // 此处filter_stmt失去了所有权
+      ComparisonExpr *cmp_expr = new ComparisonExpr(condition_filter_unit->comp(), 
+      std::move(filter_obj_left.expr), std::move(filter_obj_right.expr));
 
       cmp_exprs.emplace_back(cmp_expr);
       cmp_exprs_size++;
@@ -191,10 +185,8 @@ RC LogicalPlanGenerator::create_plan(
     break;
     case WhereType::SimpleSubQuery:
     {
-      const SubQueryFilterUnit *subquery_filter_unit = static_cast<const SubQueryFilterUnit *>(filter_unit);
-      const FilterObj &filter_obj_left = subquery_filter_unit->left();
-
-      unique_ptr<Expression> left(static_cast<Expression *>(new FieldExpr(filter_obj_left.field)));
+      SubQueryFilterUnit *subquery_filter_unit = static_cast<SubQueryFilterUnit *>(filter_unit);
+      FilterObj &filter_obj_left = subquery_filter_unit->left();
 
       unique_ptr<LogicalOperator> table_oper;
       RC rc = create_plan(subquery_filter_unit->subquery(), table_oper);
@@ -205,7 +197,7 @@ RC LogicalPlanGenerator::create_plan(
       }
       sub_oper.emplace_back(std::move(table_oper));
 
-      SubqueryExpr *subquery_expr = new SubqueryExpr(subquery_filter_unit->subqueryop(), std::move(left));
+      SubqueryExpr *subquery_expr = new SubqueryExpr(subquery_filter_unit->subqueryop(), std::move(filter_obj_left.expr));
       // subquery_expr->right().swap(subquery_filter_unit->subquery()->query_exprs());
       // 这句话引发了projectoperator的expression所有权转移
       cmp_exprs.emplace_back(subquery_expr);

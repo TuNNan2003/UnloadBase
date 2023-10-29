@@ -27,20 +27,10 @@ class FieldMeta;
 
 struct FilterObj
 {
-  bool is_attr;
-  Field field;
-  Value value;
+  std::unique_ptr<Expression> expr;
 
-  void init_attr(const Field &field)
-  {
-    is_attr = true;
-    this->field = field;
-  }
-
-  void init_value(const Value &value)
-  {
-    is_attr = false;
-    this->value = value;
+  FilterObj(std::unique_ptr<Expression> &expr){
+    expr = std::move(expr);
   }
 };
 
@@ -59,7 +49,9 @@ private:
 class SubQueryFilterUnit : public FilterUnit
 {
 public:
-  SubQueryFilterUnit() = default;
+  SubQueryFilterUnit(std::unique_ptr<Expression> &leftExpr)
+  :left_(FilterObj(leftExpr))
+  {}
   ~SubQueryFilterUnit() {}
 
   void set_queryop(SubQueryOp queryop)
@@ -76,12 +68,7 @@ public:
     select_stmt_ = static_cast<SelectStmt*>(stmt);
   }
 
-  void set_left(const FilterObj &obj)
-  {
-    left_ = obj;
-  }
-
-  const FilterObj &left() const
+  FilterObj &left()
   {
     return left_;
   }
@@ -108,7 +95,11 @@ private:
 class ConditionFilterUnit : public FilterUnit
 {
 public:
-  ConditionFilterUnit() = default;
+
+  ConditionFilterUnit(std::unique_ptr<Expression> &leftExpr,std::unique_ptr<Expression> &rightExpr)
+  :left_(FilterObj(leftExpr)),right_(FilterObj(rightExpr))
+  {}
+
   ~ConditionFilterUnit() {}
   void set_comp(CompOp comp)
   {
@@ -119,20 +110,12 @@ public:
   {
     return comp_;
   }
-  void set_left(const FilterObj &obj)
-  {
-    left_ = obj;
-  }
-  void set_right(const FilterObj &obj)
-  {
-    right_ = obj;
-  }
 
-  const FilterObj &left() const
+  FilterObj &left()
   {
     return left_;
   }
-  const FilterObj &right() const
+  FilterObj &right()
   {
     return right_;
   }
@@ -165,13 +148,13 @@ public:
 
 public:
   static RC create(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                   const ConditionSqlNode *conditions, int condition_num, FilterStmt *&stmt);
+                   ConditionSqlNode *conditions, int condition_num, FilterStmt *&stmt);
 
   static RC create_condition_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                               const ConditionSqlNode &condition, FilterUnit *&filter_unit);
+                               ConditionSqlNode &condition, FilterUnit *&filter_unit);
 
   static RC create_subquery_filter_unit(Db *db, Table *default_table, std::unordered_map<std::string, Table *> *tables,
-                               const SubQuerySqlNode &condition, FilterUnit *&filter_unit);
+                               SubQuerySqlNode &condition, FilterUnit *&filter_unit);
 
 private:
   std::vector<FilterUnit *> filter_units_; // 默认当前都是AND关系
