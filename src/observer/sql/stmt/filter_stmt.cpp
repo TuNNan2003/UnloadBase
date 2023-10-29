@@ -84,7 +84,7 @@ RC FilterStmt::create_condition_filter_unit(Db *db, Table *default_table, std::u
   }
 
   // 这里会移交表达式的所有权到过滤器单元中
-  ConditionFilterUnit* condition_filter_unit = new ConditionFilterUnit(left,right);
+  ConditionFilterUnit* condition_filter_unit = new ConditionFilterUnit(std::move(left),std::move(right));
 
   condition_filter_unit->set_comp(comp);
 
@@ -110,7 +110,7 @@ RC FilterStmt::create_subquery_filter_unit(Db *db, Table *default_table, std::un
     return RC::INVALID_ARGUMENT;
   }
 
-  SubQueryFilterUnit* SQ_filter = new SubQueryFilterUnit(left);
+  SubQueryFilterUnit* SQ_filter = new SubQueryFilterUnit(std::move(left));
 
   Table* table = nullptr;
   const FieldMeta *field = nullptr;

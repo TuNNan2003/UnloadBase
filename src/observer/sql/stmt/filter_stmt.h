@@ -29,8 +29,8 @@ struct FilterObj
 {
   std::unique_ptr<Expression> expr;
 
-  FilterObj(std::unique_ptr<Expression> &expr){
-    expr = std::move(expr);
+  FilterObj(std::unique_ptr<Expression> expr_){
+    expr = std::move(expr_);
   }
 };
 
@@ -49,8 +49,8 @@ private:
 class SubQueryFilterUnit : public FilterUnit
 {
 public:
-  SubQueryFilterUnit(std::unique_ptr<Expression> &leftExpr)
-  :left_(FilterObj(leftExpr))
+  SubQueryFilterUnit(std::unique_ptr<Expression> leftExpr)
+  :left_(std::move(leftExpr))
   {}
   ~SubQueryFilterUnit() {}
 
@@ -96,8 +96,8 @@ class ConditionFilterUnit : public FilterUnit
 {
 public:
 
-  ConditionFilterUnit(std::unique_ptr<Expression> &leftExpr,std::unique_ptr<Expression> &rightExpr)
-  :left_(FilterObj(leftExpr)),right_(FilterObj(rightExpr))
+  ConditionFilterUnit(std::unique_ptr<Expression> leftExpr,std::unique_ptr<Expression> rightExpr)
+  :left_(std::move(leftExpr)),right_(std::move(rightExpr))
   {}
 
   ~ConditionFilterUnit() {}
